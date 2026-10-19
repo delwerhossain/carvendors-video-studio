@@ -3,14 +3,62 @@
   "slug": "mitsubishi-asx",
   "folder": 2,
   "ready": true,
-  "hook": "auto",
-  "remove": [],
   "covers": [
-    {"at": 0, "dur": "all", "x": 135, "y": 1305, "w": 810, "h": 230, "text": "Spotted at B&F Cars", "kicker": "FEATURED", "size": 54}
+    {
+      "at": 0,
+      "dur": "all",
+      "x": 120,
+      "y": 1290,
+      "w": 880,
+      "h": 230,
+      "text": "Spotted at B&F Cars",
+      "kicker": "FEATURED",
+      "style": "card",
+      "size": 58
+    }
   ],
   "overlays": [
-    {"component": "label-card", "at": 0.15, "dur": 2.7, "vars": {"title": "Mitsubishi ASX", "sub": "Compact SUV. Easy to live with.", "tag": "AT B&F CARS", "x": 80, "y": 330, "size": 80}},
-    {"component": "punch-text", "at": 3.05, "dur": 2.6, "vars": {"line1": "Step", "word": "Inside", "x": 80, "y": 360, "size": 84, "lineBg": 0.5}},
-    {"component": "punch-text", "at": 5.9, "dur": 3.1, "vars": {"line1": "Dad's next", "word": "Car?", "x": 80, "y": 380, "size": 84, "italic": true, "pill": "#1F2321", "lineBg": 0.55}}
-  ]
+    {
+      "component": "hero-model",
+      "at": 0.2,
+      "dur": 2.6,
+      "vars": {
+        "make": "MITSUBISHI",
+        "model": "ASX",
+        "x": 540,
+        "y": 300,
+        "align": "center",
+        "size": 210,
+        "scrim": 0.3
+      }
+    },
+    {
+      "component": "punch-text",
+      "at": 3.05,
+      "dur": 2.6,
+      "vars": {
+        "line1": "Step",
+        "word": "Inside",
+        "x": 80,
+        "y": 330,
+        "size": 88,
+        "lineBg": 0.5
+      }
+    },
+    {
+      "component": "punch-text",
+      "at": 5.9,
+      "dur": 3.1,
+      "vars": {
+        "line1": "Dad's next",
+        "word": "Car?",
+        "x": 80,
+        "y": 380,
+        "size": 88,
+        "lineBg": 0.5
+      }
+    }
+  ],
+  "hook": "auto",
+  "remove": []
 }

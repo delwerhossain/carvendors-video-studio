@@ -73,12 +73,10 @@ positions, or inpaint; do not animate one box per caption change.
   keyword on a bright pill, group tilted −3…−5°, soft drop shadow), `label-card` (white card, charcoal Black
   title, short subtitle, small coloured tag on the edge, ≤2 ticks), `text-cover` with text, `logo-badge`.
   References: "Iconic Abarth / [Style]", "Perfect for / [City Driving]", "Sporty / [Interior]",
-  "Abarth 595 / Small Car. Big Personality." Pill colour: the car's colour when it is vivid (red car → brand
-  red `#E8202A`), charcoal `#1F2321` for black/white/silver cars. Use the real italic face for "In the details."
+  "Abarth 595 / Small Car. Big Personality." Pill colour: ALWAYS brand red `#E8202A` (see text-style.md; charcoal pills were rejected by the user). Use the real italic face for "In the details."
 - **CINEMATIC:** Oswald 700 + Manrope (`hero-model`, `detail-line`, `shape-text`) for calm, premium hero shots.
 Legibility rules for PUNCH: on blue sky the white line needs nothing; on white cloud, bright walls or
-windscreens give line 1 a charcoal backing (`lineBg` 0.45-0.6) — `check` must pass. `logo-badge` style
-`clean` (no background, reference look) only on blue/calm skies; otherwise `dark`.
+windscreens give line 1 a charcoal backing (`lineBg` 0.45-0.6) — `check` must pass. `logo-badge` style `clean` top-centre is the default (reference look).
 Tags and ticks state only true things ("AT B&F CARS", "FEATURED"); never "NEW ARRIVAL", "SOLD", engine or
 economy facts unless verified. **Never leave an empty `text-cover`** — an empty dark box looks crude: always
 give it a line (and optional kicker), or inpaint instead.

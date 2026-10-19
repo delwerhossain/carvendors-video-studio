@@ -12,8 +12,11 @@
     x, y, w, h  number   rectangle to cover (1080x1920 px)                                  120, 1330, 840, 180
     text        string   new line(s); "|" = line break; "" = cover only                     ""
     kicker      string   optional small line above (e.g. "FEATURED")                         ""
-    style       enum     dark (charcoal) | light (white, charcoal text) | accent (accent colour, white text) "dark"
-    accent      color    accent colour for style=accent (derive from the car, muted)        "#B8323A"
+    style       enum     card (DEFAULT, reference look: white card, Montserrat Black charcoal text, kicker as a
+                         red tag on the top edge, soft shadow, slight tilt) | red (brand-red box, white
+                         Montserrat Black, slight tilt) | light | dark | accent (legacy — avoid dark: dull) "card"
+    accent      color    tag / red-box colour (brand red)                                   "#E8202A"
+    tilt        number   rotation deg (keep 0 when covering old text: a tilt exposes its corners)   0
     opacity     number   box opacity for dark style (0.7-1). Below 0.95 the old text may show through.  1
     size        number   text px (40-64)                                                    52
     align       enum     left | center                                                     "center"
@@ -35,8 +38,9 @@
     {"id":"h","type":"number","label":"height","default":180,"min":20,"max":1920},
     {"id":"text","type":"string","label":"New text (| = new line)","default":""},
     {"id":"kicker","type":"string","label":"Kicker","default":""},
-    {"id":"style","type":"enum","label":"Style","default":"dark","options":[{"value":"dark","label":"Dark"},{"value":"light","label":"White"},{"value":"accent","label":"Accent"}]},
-    {"id":"accent","type":"color","label":"Accent","default":"#B8323A"},
+    {"id":"style","type":"enum","label":"Style","default":"card","options":[{"value":"card","label":"White card + red tag"},{"value":"red","label":"Red box"},{"value":"light","label":"White"},{"value":"dark","label":"Dark (legacy)"},{"value":"accent","label":"Accent"}]},
+    {"id":"tilt","type":"number","label":"Tilt","default":0,"min":-6,"max":2,"step":0.5},
+    {"id":"accent","type":"color","label":"Accent","default":"#E8202A"},
     {"id":"opacity","type":"number","label":"Box opacity","default":1,"min":0.5,"max":1,"step":0.01},
     {"id":"size","type":"number","label":"Text size","default":52,"min":28,"max":90},
     {"id":"align","type":"enum","label":"Align","default":"center","options":[{"value":"left","label":"Left"},{"value":"center","label":"Centre"}]},
@@ -52,6 +56,12 @@
       <style>
         @font-face { font-family: "Manrope"; src: url("../assets/fonts/Manrope-Regular.ttf") format("truetype"); font-weight: 400; font-style: normal; }
         @font-face { font-family: "Manrope"; src: url("../assets/fonts/Manrope-Bold.ttf") format("truetype"); font-weight: 700; font-style: normal; }
+        @font-face { font-family: "Montserrat"; src: url("../assets/fonts/Montserrat-Black.ttf") format("truetype"); font-weight: 900; font-style: normal; }
+        @font-face { font-family: "Montserrat"; src: url("../assets/fonts/Montserrat-ExtraBold.ttf") format("truetype"); font-weight: 800; font-style: normal; }
+        #__ID__ .tc.card, #__ID__ .tc.red { font-family: "Montserrat", sans-serif; box-shadow: 0 14px 36px rgb(0 0 0 / 0.3), 0 2px 6px rgb(0 0 0 / 0.12); }
+        #__ID__ .tc.card .tc-t, #__ID__ .tc.red .tc-t { font-weight: 900; letter-spacing: -0.02em; }
+        #__ID__ .tc.card .tc-k { position: absolute; left: 22px; top: -24px; margin: 0; opacity: 1; color: #fff; font-weight: 800; font-size: 24px;
+          letter-spacing: 0.06em; padding: 8px 16px 9px; border-radius: 10px; background: var(--tag, #E8202A); box-shadow: 0 6px 14px rgb(0 0 0 / 0.25); }
         #__ID__ { position: absolute; inset: 0; pointer-events: none; }
         #__ID__ .tc { position: absolute; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center;
           padding: 18px 34px; font-family: "Manrope", sans-serif; }
@@ -65,14 +75,18 @@
       <script>
         (function () {
           const ID = "__ID__", D = __DUR__;
-          const DEF = { x: 120, y: 1330, w: 840, h: 180, text: "", kicker: "", style: "dark", accent: "#B8323A", opacity: 1, size: 52, align: "center", radius: 22, reveal: "wipe", delay: 0, exit: true };
+          const DEF = { x: 120, y: 1330, w: 840, h: 180, text: "", kicker: "", style: "card", tilt: 0, accent: "#E8202A", opacity: 1, size: 52, align: "center", radius: 22, reveal: "wipe", delay: 0, exit: true };
           let v = {};
           try { v = (window.__hyperframes && window.__hyperframes.getVariables && window.__hyperframes.getVariables()) || {}; } catch (e) {}
           const P = Object.assign({}, DEF, v);
           const root = document.getElementById(ID);
           const box = root.querySelector(".tc"), k = root.querySelector(".tc-k"), t = root.querySelector(".tc-t");
-          const bg = P.style === "light" ? "#ffffff" : P.style === "accent" ? P.accent : "rgb(17 19 17 / " + P.opacity + ")";
-          const fg = P.style === "light" ? "#111311" : "#ffffff";
+          const bg = (P.style === "light" || P.style === "card") ? "#ffffff" : (P.style === "accent" || P.style === "red") ? P.accent : "rgb(17 19 17 / " + P.opacity + ")";
+          const fg = (P.style === "light" || P.style === "card") ? "#111311" : "#ffffff";
+          box.classList.add(P.style);
+          box.style.setProperty("--tag", P.accent);
+          if (P.style === "card" || P.style === "red") gsap.set(box, { rotation: Number(P.tilt), transformOrigin: "0% 50%" });
+          if (P.style === "card" && P.kicker) box.style.paddingTop = "40px";
           Object.assign(box.style, { left: P.x + "px", top: P.y + "px", minWidth: P.w + "px", minHeight: P.h + "px",
             background: bg, color: fg, borderRadius: P.radius + "px", textAlign: P.align, alignItems: P.align === "left" ? "flex-start" : "center" });
           t.style.fontSize = P.size + "px";
@@ -81,8 +95,9 @@
           const hasText = t.children.length > 0;
           function build() {
             const tl = gsap.timeline({ paused: true }), t0 = Number(P.delay);
-            if (P.reveal === "wipe") tl.fromTo(box, { clipPath: "inset(0 100% 0 0 round " + P.radius + "px)" }, { clipPath: "inset(0 0% 0 0 round " + P.radius + "px)", duration: 0.26, ease: "expo.out" }, t0);
-            else if (P.reveal === "rise") tl.fromTo(box, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.26, ease: "expo.out" }, t0);
+            const rv = (P.style === "card" || P.style === "red") && P.reveal === "wipe" ? "rise" : P.reveal;  // a wipe would clip the tag / tilt
+            if (rv === "wipe") tl.fromTo(box, { clipPath: "inset(0 100% 0 0 round " + P.radius + "px)" }, { clipPath: "inset(0 0% 0 0 round " + P.radius + "px)", duration: 0.26, ease: "expo.out" }, t0);
+            else if (rv === "rise") tl.fromTo(box, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.26, ease: "expo.out" }, t0);
             else tl.set(box, { opacity: 1 }, 0);
             if (hasText) tl.fromTo([k, t].filter((e) => e.isConnected), { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.22, ease: "power3.out", stagger: 0.05 }, t0 + 0.09);
             if (P.exit) tl.to(box, { opacity: 0, duration: 0.16, ease: "power1.in" }, Math.max(t0 + 0.4, D - 0.18));

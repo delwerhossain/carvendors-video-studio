@@ -65,8 +65,8 @@ def text_hint(f, dur, w, h):
             xs = np.nonzero(static[ys].sum(0) > 0)[0]
             if len(xs) and (y - start) > 8:
                 bx, by, bw, bh = int(xs.min()) - 6, int(start) - 6, int(xs.max() - xs.min()) + 12, int(y - start) + 12
-                boxes.append({"src": [max(bx, 0), max(by, 0), bw, bh],
-                              "canvas": [round(bx * 1080 / w) - 8, round(by * 1920 / h) - 8, round(bw * 1080 / w) + 16, round(bh * 1920 / h) + 16]})
+                boxes.append({"src": [max(bx, 0), max(by, 0), bw + 40, bh],   # +40 px right: TikTok emoji after the text are not white
+                              "canvas": [round(bx * 1080 / w) - 30, round(by * 1920 / h) - 16, round(bw * 1080 / w) + 60 + 70, round(bh * 1920 / h) + 32]})
             start = None
     return boxes
 

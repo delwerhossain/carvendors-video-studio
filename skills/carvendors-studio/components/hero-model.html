@@ -16,6 +16,7 @@
     align     enum     left | center | right                                  "center"
     size      number   model font px (140-260)                                210
     makeSize  number   make line font px (40-56)                              46
+    font      enum     montserrat (Black, the reference "595" look — default) | oswald (condensed)   "montserrat"
     tracking  number   make line letter-spacing, em                           0.32
     gap       number   space between make line and number, px                 6
     dot       boolean  tiny green dot after the number                        false
@@ -42,6 +43,7 @@
     {"id":"align","type":"enum","label":"Align","default":"center","options":[{"value":"left","label":"Left"},{"value":"center","label":"Centre"},{"value":"right","label":"Right"}]},
     {"id":"size","type":"number","label":"Model size (px)","default":210,"min":100,"max":300},
     {"id":"makeSize","type":"number","label":"Make size (px)","default":46,"min":28,"max":72},
+    {"id":"font","type":"enum","label":"Font","default":"montserrat","options":[{"value":"montserrat","label":"Montserrat Black"},{"value":"oswald","label":"Oswald"}]},
     {"id":"tracking","type":"number","label":"Make tracking (em)","default":0.32,"min":0,"max":0.6,"step":0.01},
     {"id":"gap","type":"number","label":"Line gap (px)","default":6,"min":-40,"max":80},
     {"id":"dot","type":"boolean","label":"Green dot","default":false},
@@ -56,6 +58,8 @@
     <template>
       <style>
         @font-face { font-family: "Manrope"; src: url("../assets/fonts/Manrope-Bold.ttf") format("truetype"); font-weight: 700; font-style: normal; }
+        @font-face { font-family: "Montserrat"; src: url("../assets/fonts/Montserrat-Black.ttf") format("truetype"); font-weight: 900; font-style: normal; }
+        @font-face { font-family: "Montserrat"; src: url("../assets/fonts/Montserrat-ExtraBold.ttf") format("truetype"); font-weight: 800; font-style: normal; }
         @font-face { font-family: "Oswald"; src: url("../assets/fonts/Oswald.ttf") format("truetype"); font-weight: 200 700; font-style: normal; }
         #__ID__ { position: absolute; inset: 0; pointer-events: none; }
         #__ID__ .cv-scrim { position: absolute; left: calc(-21% - 90px); right: calc(-21% - 90px); top: calc(-21% - 90px); bottom: calc(-21% - 90px); opacity: 0; pointer-events: none; }
@@ -81,7 +85,7 @@
       <script>
         (function () {
           const ID = "__ID__", D = __DUR__;
-          const DEF = { make: "ABARTH", model: "595", x: 540, y: 300, align: "center", size: 210, makeSize: 46, tracking: 0.32, gap: 6, dot: false, green: "#7AC943", scrim: 0, delay: 0.15, exit: true };
+          const DEF = { font: "montserrat", make: "ABARTH", model: "595", x: 540, y: 300, align: "center", size: 210, makeSize: 46, tracking: 0.32, gap: 6, dot: false, green: "#7AC943", scrim: 0, delay: 0.15, exit: true };
           let v = {};
           try { v = (window.__hyperframes && window.__hyperframes.getVariables && window.__hyperframes.getVariables()) || {}; } catch (e) {}
           const P = Object.assign({}, DEF, v);
@@ -96,6 +100,11 @@
           make.textContent = String(P.make || "").trim();
           if (!make.textContent) make.style.display = "none";
           numText.textContent = String(P.model || "").trim();
+          const MS = P.font !== "oswald";
+          const NUMF = MS ? "900 " + P.size + "px Montserrat" : "700 " + P.size + "px Oswald";
+          const MKF = MS ? "800 " + P.makeSize + "px Montserrat" : "700 " + P.makeSize + "px Manrope";
+          if (MS) { Object.assign(num.style, { fontFamily: "Montserrat", fontWeight: "900", letterSpacing: "-0.035em", lineHeight: "0.86", textShadow: "0 4px 18px rgb(0 0 0 / 0.28), 0 1px 2px rgb(0 0 0 / 0.25)" });
+                    Object.assign(make.style, { fontFamily: "Montserrat", fontWeight: "800", textShadow: "0 2px 8px rgb(0 0 0 / 0.3)" }); }
           make.style.fontSize = P.makeSize + "px";
           make.style.letterSpacing = P.tracking + "em";
           make.style.marginRight = -P.tracking + "em"; // drop trailing tracking so the line centres/right-aligns true
@@ -131,8 +140,8 @@
           }
 
           function build() {
-            optical(make, bearings(make.textContent,"700 " + P.makeSize + "px Manrope"));
-            const nb = bearings(numText.textContent, "700 " + P.size + "px Oswald");
+            optical(make, bearings(make.textContent, MKF));
+            const nb = bearings(numText.textContent, NUMF);
             if (dotEl) nb.r = 0;
             optical(num, nb);
             box.style.left = P.x + "px";
@@ -155,8 +164,8 @@
             if (window.__hfForceTimelineRebind) window.__hfForceTimelineRebind();
           }
           Promise.all([
-            document.fonts.load("700 " + P.size + "px Oswald", numText.textContent || "0"),
-            document.fonts.load("700 " + P.makeSize + "px Manrope", make.textContent || "A"),
+            document.fonts.load(NUMF, numText.textContent || "0"),
+            document.fonts.load(MKF, make.textContent || "A"),
           ]).then(build, build);
         })();
       </script>

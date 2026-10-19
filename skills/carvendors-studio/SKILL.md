@@ -54,17 +54,19 @@ Work in batches of 10-20; after each batch look at the frame sheets (`output/*_f
 ## 3. What to decide per video (the only AI work)
 From the contact sheet + `source_info` + `text_hint` in job.json:
 - **slug**: short model name, e.g. `mitsubishi-asx`.
+- **Text look: follow `references/text-style.md` exactly** (the preview images in `text_refs`): white
+  Montserrat Black text, ONE accent = brand red `#E8202A` pills/tags, white cards with charcoal text, green only
+  for tiny dots/ticks, logo clean top-centre. Never charcoal/black boxes, pills or badges on footage.
 - **Old text** (each `text_hint` box, `src` = source px, `canvas` = 1080x1920 px), cheapest good option:
-  keep (harmless, readable, on-brand, e.g. a plain model name) → **cover** with `covers[]` (`text-cover` box on
-  `canvas` coords, ALWAYS with a new UK-English line, e.g. "Dad's next car?" / kicker "FEATURED") when it shows
-  prices, "TikTok", other businesses, rude or unverified claims → **remove** (`remove[]` = `src` box, inpaint)
-  only if a box would cover the car. Never an empty cover.
-- **Overlays** (0-3, key beats only, never over the car's face/badge/wheels):
-  `label-card` (white card title + short subtitle, optional true tag) on the first shot ·
-  `punch-text` ("Iconic Abarth / [Style]", "Perfect for / [City Driving]", "Sporty / [Interior]") on detail
-  or interior shots · `hero-model` (big "ABARTH / 595") when the sky is empty. Pill colour = the car's vivid
-  colour (`#E8202A` for red) or charcoal `#1F2321` for black/white/silver cars. On white cloud or bright
-  windscreens set `lineBg` 0.45-0.6. Times are seconds from the start of the main video.
+  keep (harmless, readable, on-brand, e.g. a plain model name) → **cover** with `covers[]` (`text-cover`, style
+  `card` = white card + red kicker tag, on `canvas` coords, ALWAYS with a line, e.g. kicker "FEATURED" +
+  "Spotted at B&F Cars") when it shows prices, "TikTok", other businesses, rude or unverified claims →
+  **remove** (`remove[]` = `src` box, inpaint) only if a cover would hide the car. Never an empty cover.
+- **Overlays** (0-3, key beats only, never over the car's face/badge/wheels): `label-card` on the first shot ·
+  `punch-text` ("Iconic Abarth / [Style]", "Perfect for / [City Driving]", "Sporty / [Interior]") on detail or
+  interior shots · `hero-model` (big "ABARTH / 595") when the sky is empty · `detail-line` "In the / details."
+  on a close-up. Pill = brand red always. On white cloud / bright windscreens: move the text or `lineBg`
+  0.35-0.5 (soft glow, no box). Times are seconds from the start of the main video.
 - **hook**: leave `"auto"` (least-used, not used in the last N edits). `"car_hook": true` for the Car Hooks
   folder. A named hook: `{"file": "Car Hooks/Car Flip.mp4", "in": 0, "out": 3.2}` — whole action, cut only
   dead time after the payoff. `transition`: `cut` (default) · `whip` · `flash` · `zoom` — exactly one.
@@ -79,7 +81,7 @@ Full field list: docstring of `tools/build.py`. Example: `examples/job-v002.json
 - **Outro**: put the team outro video in the `outros` folder and set `defaults.outro_video` in
   `_studio/config.json`; every new build uses it. Until then: real showroom photo outro (`defaults.outro_photo`).
 - **Music**: `defaults.music` list in the config (library tracks, licence checked, credit line in the post).
-  Logo: `defaults.logo` (`logo-badge`, dark style; `clean` only on calm blue skies).
+  Logo: `defaults.logo` (`logo-badge`, `clean` style, top-centre — the reference look).
 
 ## 5. Before saying a video is done
 `build.py` reports `hyperframes check` — it must say "Check passed" (fix contrast by position or `lineBg`).
@@ -88,6 +90,7 @@ Report in Bangla: output path(s), hook used, what was covered/removed, any block
 when asked (include the music credit line for NCS tracks).
 
 ## 6. Read more only when needed
+- `references/text-style.md` — THE text look (palette, type, the seven elements, placement). Read before overlays.
 - `references/components.md` — every component's variables (label-card, punch-text, text-cover, logo-badge,
   hero-model, detail-line, shape-text, verified-feature, caption-line, localized-contrast, outro-real-showroom).
 - `references/design.md` — full design system, colour, type presets (PUNCH / CINEMATIC), old-text ladder,

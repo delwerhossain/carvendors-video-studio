@@ -7,8 +7,8 @@
   dark badge, or cv-logo-dark on a white badge). Optional small "Featured dealer: B&F Cars" line inside.
 
   Variables (host data-variable-values):
-    corner    enum     top-left | top-right | top-center | bottom-left                       "top-left"
-    style     enum     dark (charcoal badge, white logo) | light (white card, dark logo) | clean (no background, soft shadow — reference look, use on calm skies)   "dark"
+    corner    enum     top-left | top-right | top-center | bottom-left                       "top-center"
+    style     enum     dark (charcoal badge, white logo) | light (white card, dark logo) | clean (no background, soft shadow + feathered glow — THE reference look, default)   "clean"
     width     number   badge width px (300-460)                                                360
     credit    boolean  show the dealer line inside the badge                                   true
     dealer    string   dealer line text                                       "Featured dealer: B&F Cars"
@@ -24,8 +24,8 @@
 -->
 <html
   data-composition-variables='[
-    {"id":"corner","type":"enum","label":"Corner","default":"top-left","options":[{"value":"top-left","label":"Top left"},{"value":"top-right","label":"Top right"},{"value":"top-center","label":"Top centre"},{"value":"bottom-left","label":"Bottom left"}]},
-    {"id":"style","type":"enum","label":"Style","default":"dark","options":[{"value":"dark","label":"Dark badge"},{"value":"light","label":"White badge"},{"value":"clean","label":"No background (shadow only)"}]},
+    {"id":"corner","type":"enum","label":"Corner","default":"top-center","options":[{"value":"top-left","label":"Top left"},{"value":"top-right","label":"Top right"},{"value":"top-center","label":"Top centre"},{"value":"bottom-left","label":"Bottom left"}]},
+    {"id":"style","type":"enum","label":"Style","default":"clean","options":[{"value":"dark","label":"Dark badge"},{"value":"light","label":"White badge"},{"value":"clean","label":"No background (shadow only)"}]},
     {"id":"width","type":"number","label":"Badge width (px)","default":360,"min":240,"max":520},
     {"id":"credit","type":"boolean","label":"Dealer line","default":true},
     {"id":"dealer","type":"string","label":"Dealer line","default":"Featured dealer: B&F Cars"},
@@ -47,7 +47,9 @@
           border-radius: 18px; padding: 16px 20px 15px; opacity: 0; }
         #__ID__ .lb.dark { background: rgb(17 19 17 / var(--op, 0.78)); border: 1px solid rgb(255 255 255 / 0.10); }
         #__ID__ .lb.light { background: #fff; border: 1px solid rgb(17 19 17 / 0.06); }
-        #__ID__ .lb.clean { background: none; padding: 0; filter: drop-shadow(0 2px 6px rgb(0 0 0 / 0.45)) drop-shadow(0 0 1px rgb(0 0 0 / 0.4)); }
+        #__ID__ .lb.clean { background: none; padding: 0; overflow: visible; isolation: isolate; filter: drop-shadow(0 2px 5px rgb(0 0 0 / 0.5)) drop-shadow(0 0 1px rgb(0 0 0 / 0.45)); }
+        #__ID__ .lb.clean::before { content: ""; position: absolute; left: -12%; right: -12%; top: -38%; bottom: -38%; z-index: -1;
+          background: radial-gradient(closest-side, rgb(17 19 17 / 0.46) 0%, rgb(17 19 17 / 0.36) 55%, rgb(17 19 17 / 0.12) 82%, rgb(17 19 17 / 0) 100%); }
         #__ID__ .lb.clean .lb-line { color: #fff; }
         #__ID__ .lb-row { display: flex; align-items: center; gap: 12px; }
         #__ID__ .lb img { display: block; height: auto; }
@@ -66,7 +68,7 @@
       <script>
         (function () {
           const ID = "__ID__", D = __DUR__;
-          const DEF = { corner: "top-left", style: "dark", width: 360, credit: true, dealer: "Featured dealer: B&F Cars", opacity: 0.78, margin: 64, top: 130, delay: 0.05, exit: false };
+          const DEF = { corner: "top-center", style: "clean", width: 360, credit: true, dealer: "Featured dealer: B&F Cars", opacity: 0.78, margin: 64, top: 130, delay: 0.05, exit: false };
           let v = {};
           try { v = (window.__hyperframes && window.__hyperframes.getVariables && window.__hyperframes.getVariables()) || {}; } catch (e) {}
           const P = Object.assign({}, DEF, v);
