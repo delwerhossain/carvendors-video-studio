@@ -1,0 +1,165 @@
+<!doctype html>
+<!--
+  hero-model  (CarVendors premium minimal hero: small spaced make line over a very large model number)
+
+  Purpose: MODE A first-shot title. "ABARTH" (Manrope 700, widely tracked) sits above a VERY large white
+  model number/name "595" (Oswald 700, line-height 0.9), floating in real negative space (sky, plain wall).
+  No box. Ink edges of the two lines are optically aligned (side bearings measured from the real glyphs),
+  and the tracked make line drops its trailing letter-space so centred/right layouts sit true.
+  Optional tiny brand-green dot after the number. Optional localized charcoal scrim behind the text only.
+
+  Variables (host data-variable-values):
+    make      string   small line above ("" hides it)                         "ABARTH"
+    model     string   big number / name                                      "595"
+    x         number   anchor x px (left edge / centre / right edge by align)  540
+    y         number   top of the block px                                    300
+    align     enum     left | center | right                                  "center"
+    size      number   model font px (140-260)                                210
+    makeSize  number   make line font px (40-56)                              46
+    tracking  number   make line letter-spacing, em                           0.32
+    gap       number   space between make line and number, px                 6
+    dot       boolean  tiny green dot after the number                        false
+    green     color    dot colour (real CarVendors logo green)                "#7AC943"
+    scrim     number   0-0.55 localized charcoal gradient behind the text     0
+    delay     number   entrance start, s after host start                     0.15
+    exit      boolean  fade out at the end of the slot                        true
+
+  Timing: make line 320 ms opacity + 12 px rise (power3.out) at delay; number 60 ms later rises 20 px out
+  of a bottom-up clip mask, 320 ms expo.out; dot fades in 160 ms after the number lands. Scrim fades in
+  200 ms with the make line. Exit 200 ms (opacity + 8 px lift, power2.in) ending 20 ms before the slot end.
+
+  Mount:
+    python3 ~/.claude/skills/carvendors-studio/tools/mount.py add . hero-model hero --start 0 --dur 2.8 \
+      --vars '{"make":"ABARTH","model":"595","x":570,"y":250,"size":235,"scrim":0.3}'
+  Needs assets/fonts/Manrope-Bold.ttf and assets/fonts/Oswald.ttf (variable, weight 700 used).
+-->
+<html
+  data-composition-variables='[
+    {"id":"make","type":"string","label":"Make line","default":"ABARTH"},
+    {"id":"model","type":"string","label":"Model","default":"595"},
+    {"id":"x","type":"number","label":"Anchor x (px)","default":540,"min":0,"max":1080},
+    {"id":"y","type":"number","label":"Top (px)","default":300,"min":0,"max":1900},
+    {"id":"align","type":"enum","label":"Align","default":"center","options":[{"value":"left","label":"Left"},{"value":"center","label":"Centre"},{"value":"right","label":"Right"}]},
+    {"id":"size","type":"number","label":"Model size (px)","default":210,"min":100,"max":300},
+    {"id":"makeSize","type":"number","label":"Make size (px)","default":46,"min":28,"max":72},
+    {"id":"tracking","type":"number","label":"Make tracking (em)","default":0.32,"min":0,"max":0.6,"step":0.01},
+    {"id":"gap","type":"number","label":"Line gap (px)","default":6,"min":-40,"max":80},
+    {"id":"dot","type":"boolean","label":"Green dot","default":false},
+    {"id":"green","type":"color","label":"Dot colour","default":"#7AC943"},
+    {"id":"scrim","type":"number","label":"Scrim (0-0.55)","default":0,"min":0,"max":0.55,"step":0.01},
+    {"id":"delay","type":"number","label":"Entrance delay (s)","default":0.15,"min":0,"max":5,"step":0.05},
+    {"id":"exit","type":"boolean","label":"Exit at end","default":true}
+  ]'
+>
+  <head><meta charset="UTF-8" /></head>
+  <body>
+    <template>
+      <style>
+        @font-face { font-family: "Manrope"; src: url("../assets/fonts/Manrope-Bold.ttf") format("truetype"); font-weight: 700; font-style: normal; }
+        @font-face { font-family: "Oswald"; src: url("../assets/fonts/Oswald.ttf") format("truetype"); font-weight: 200 700; font-style: normal; }
+        #hero { position: absolute; inset: 0; pointer-events: none; }
+        #hero .cv-scrim { position: absolute; left: calc(-21% - 90px); right: calc(-21% - 90px); top: calc(-21% - 90px); bottom: calc(-21% - 90px); opacity: 0; pointer-events: none; }
+        #hero .hm-box { position: absolute; left: 540px; top: 300px; display: flex; flex-direction: column; align-items: flex-start; color: #fff; }
+        #hero .hm-make {
+          position: relative; display: block; white-space: nowrap;
+          font-family: "Manrope", sans-serif; font-weight: 700; font-size: 46px; line-height: 1;
+          letter-spacing: 0.32em; text-shadow: 0 1px 2px rgb(0 0 0 / 0.22);
+        }
+        #hero .hm-num {
+          position: relative; display: block; white-space: nowrap;
+          font-family: "Oswald", sans-serif; font-weight: 700; font-size: 210px; line-height: 0.9;
+          letter-spacing: -0.005em; text-shadow: 0 2px 3px rgb(0 0 0 / 0.16);
+        }
+        #hero .hm-dot { display: inline-block; width: 0.072em; height: 0.072em; margin-left: 0.045em; border-radius: 50%; background: #7AC943; }
+      </style>
+      <div id="hero" data-composition-id="hero" data-width="1080" data-height="1920">
+        <div class="hm-box"><div class="cv-scrim" data-layout-allow-overflow></div>
+          <div class="hm-make"></div>
+          <div class="hm-num"><span class="hm-numtext"></span></div>
+        </div>
+      </div>
+      <script>
+        (function () {
+          const ID = "hero", D = 2.8;
+          const DEF = { make: "ABARTH", model: "595", x: 540, y: 300, align: "center", size: 210, makeSize: 46, tracking: 0.32, gap: 6, dot: false, green: "#7AC943", scrim: 0, delay: 0.15, exit: true };
+          let v = {};
+          try { v = (window.__hyperframes && window.__hyperframes.getVariables && window.__hyperframes.getVariables()) || {}; } catch (e) {}
+          const P = Object.assign({}, DEF, v);
+          const root = document.getElementById(ID);
+          const box = root.querySelector(".hm-box");
+          const make = root.querySelector(".hm-make");
+          const num = root.querySelector(".hm-num");
+          const numText = root.querySelector(".hm-numtext");
+          const scrim = root.querySelector(".cv-scrim");
+          const al = ["left", "center", "right"].includes(P.align) ? P.align : "center";
+
+          make.textContent = String(P.make || "").trim();
+          if (!make.textContent) make.style.display = "none";
+          numText.textContent = String(P.model || "").trim();
+          make.style.fontSize = P.makeSize + "px";
+          make.style.letterSpacing = P.tracking + "em";
+          make.style.marginRight = -P.tracking + "em"; // drop trailing tracking so the line centres/right-aligns true
+          make.style.marginBottom = P.gap + "px";
+          num.style.fontSize = P.size + "px";
+          box.style.alignItems = { left: "flex-start", center: "center", right: "flex-end" }[al];
+          let dotEl = null;
+          if (P.dot) {
+            dotEl = document.createElement("span");
+            dotEl.className = "hm-dot";
+            dotEl.style.background = P.green;
+            num.appendChild(dotEl);
+          }
+
+          // side bearings of the real glyphs (canvas), so ink edges line up instead of glyph boxes
+          const cv = document.createElement("canvas").getContext("2d");
+          function bearings(text, font) {
+            if (!text) return { l: 0, r: 0 };
+            cv.font = font;
+            const m = cv.measureText(text);
+            return { l: -m.actualBoundingBoxLeft, r: m.width - m.actualBoundingBoxRight };
+          }
+          function optical(el, b) {
+            const off = al === "left" ? -b.l : al === "right" ? b.r : (b.r - b.l) / 2;
+            el.style.left = off.toFixed(1) + "px";
+          }
+          // scrim = first child of the text box, sized in % of the box (no layout measuring: clips that start
+          // later are display:none at build time, so box sizes read 0)
+          function placeScrim(a) {
+            if (!(a > 0)) { scrim.style.display = "none"; return; }
+            const c = (k) => "rgb(17 19 17 / " + (a * k).toFixed(3) + ")";
+            scrim.style.background = "radial-gradient(closest-side, " + c(1) + " 0%, " + c(1) + " 40%, " + c(0.8) + " 58%, " + c(0.46) + " 74%, " + c(0.16) + " 88%, " + c(0) + " 100%)";
+          }
+
+          function build() {
+            optical(make, bearings(make.textContent,"700 " + P.makeSize + "px Manrope"));
+            const nb = bearings(numText.textContent, "700 " + P.size + "px Oswald");
+            if (dotEl) nb.r = 0;
+            optical(num, nb);
+            box.style.left = P.x + "px";
+            gsap.set(box, { xPercent: al === "left" ? 0 : al === "right" ? -100 : -50 });
+            box.style.top = P.y + "px";
+            placeScrim(Math.min(0.55, Number(P.scrim) || 0));
+
+            const tl = gsap.timeline({ paused: true });
+            const t0 = Number(P.delay);
+            if (P.scrim > 0) tl.fromTo(scrim, { opacity: 0 }, { opacity: 1, duration: 0.2, ease: "power1.out" }, t0);
+            if (make.textContent) tl.fromTo(make, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.32, ease: "power3.out" }, t0);
+            tl.fromTo(num, { y: 20, clipPath: "inset(100% -12% -12% -12%)" },
+              { y: 0, clipPath: "inset(-12% -12% -12% -12%)", duration: 0.32, ease: "expo.out" }, t0 + 0.06);
+            if (dotEl) tl.fromTo(dotEl, { opacity: 0 }, { opacity: 1, duration: 0.16, ease: "power1.out" }, t0 + 0.34);
+            if (P.exit) {
+              const te = Math.max(t0 + 0.8, D - 0.22);
+              tl.to(box, { opacity: 0, y: -8, duration: 0.2, ease: "power2.in" }, te);
+            }
+            window.__timelines[ID] = tl;
+            if (window.__hfForceTimelineRebind) window.__hfForceTimelineRebind();
+          }
+          Promise.all([
+            document.fonts.load("700 " + P.size + "px Oswald", numText.textContent || "0"),
+            document.fonts.load("700 " + P.makeSize + "px Manrope", make.textContent || "A"),
+          ]).then(build, build);
+        })();
+      </script>
+    </template>
+  </body>
+</html>

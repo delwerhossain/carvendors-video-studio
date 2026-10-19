@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      @font-face { font-family: "Manrope"; src: url("assets/fonts/Manrope-Bold.ttf") format("truetype"); font-weight: 700; font-style: normal; }
+      @font-face { font-family: "Source Sans 3"; src: url("assets/fonts/SourceSans3-SemiBold.ttf") format("truetype"); font-weight: 600; font-style: normal; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { margin: 0; width: 1080px; height: 1920px; overflow: hidden; background: #000; }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: #000; }
+      #root > div[data-composition-src] { position: absolute; inset: 0; pointer-events: none; }
+
+      /* ---- footage: two non-timed wrappers per shot (kb = drift, pz = punch) ---- */
+      .kb { position: absolute; inset: 0; overflow: hidden; will-change: transform; }
+      .pz { position: absolute; inset: 0; will-change: transform; }
+      .pz video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+
+      /* ---- dynamic status pill: sits exactly over the removed TikTok sticker ---- */
+      #pill {
+        position: absolute; left: 250px; top: 342px; width: 640px; height: 176px;
+        border-radius: 44px; overflow: hidden;
+        background: linear-gradient(180deg, rgb(255 255 255 / 0.09), rgb(255 255 255 / 0.04));
+        border: 1.5px solid rgb(255 255 255 / 0.28);
+        box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.18);
+        -webkit-backdrop-filter: blur(30px) saturate(1.15) brightness(0.84);
+        backdrop-filter: blur(30px) saturate(1.15) brightness(0.84);
+        z-index: 5;
+      }
+      .ps { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 20px;
+            color: #fff; font-family: "Manrope", sans-serif; font-weight: 700; letter-spacing: -0.015em;
+            text-shadow: 0 1px 3px rgb(0 0 0 / 0.18); white-space: nowrap; opacity: 0; }
+      .ps svg { flex: none; }
+      #ps1 { font-size: 78px; }
+      #ps2 { font-size: 46px; }
+      #ps3 { font-size: 46px; }
+      #ps4 { font-size: 44px; }
+      #ps5 { font-size: 50px; }
+      .dot3 { display: inline-flex; gap: 7px; margin-left: 4px; }
+      .dot3 i { display: block; width: 9px; height: 9px; border-radius: 50%; background: #fff; opacity: 0.25; }
+      #pill-sheen { position: absolute; top: -20px; bottom: -20px; left: 0; width: 180px;
+        background: linear-gradient(100deg, rgb(255 255 255 / 0) 0%, rgb(255 255 255 / 0.32) 50%, rgb(255 255 255 / 0) 100%);
+        opacity: 0; }
+
+      /* ---- featured dealer badge ---- */
+      #dealer { position: absolute; left: 72px; top: 640px; z-index: 5; }
+      #dealer .kick { display: inline-block; padding: 12px 22px 13px; border-radius: 18px;
+        font-family: "Source Sans 3", sans-serif; font-weight: 600; font-size: 30px; letter-spacing: 0.14em; color: #fff;
+        background: rgb(255 255 255 / 0.07); border: 1.5px solid rgb(255 255 255 / 0.26);
+        -webkit-backdrop-filter: blur(28px) saturate(1.15); backdrop-filter: blur(28px) saturate(1.15); }
+      #dealer .card { width: 400px; height: 200px; border-radius: 26px; background: #fff;
+        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
+      #dealer .card .k { font-family: "Source Sans 3", sans-serif; font-weight: 600; font-size: 26px; letter-spacing: 0.16em; color: #3a3d3c; }
+      #dealer .card img { width: 344px; height: auto; display: block; }
+
+      /* ---- end card ---- */
+      #end { position: absolute; inset: 0; background: #0b0d0c; overflow: hidden; }
+      .glow { position: absolute; border-radius: 50%; filter: blur(90px); }
+      #glow-g { left: -260px; top: -200px; width: 900px; height: 900px; background: rgb(122 201 67 / 0.20); }
+      #glow-r { right: -300px; bottom: 120px; width: 1000px; height: 1000px; background: rgb(227 38 47 / 0.16); }
+      #frame { position: absolute; left: 90px; top: 590px; width: 900px; height: 506px; border-radius: 32px; overflow: hidden;
+        border: 1.5px solid rgb(255 255 255 / 0.22); }
+      #frame img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform-origin: 72% 30%; }
+      #lockup { position: absolute; inset: 0; }
+      #lk-logo { position: absolute; left: 110px; top: 560px; width: 860px; height: 127px; }
+      #lk-logo img { width: 860px; height: auto; display: block; }
+      #lk-sheen { position: absolute; top: 0; left: 0; width: 220px; height: 127px;
+        background: linear-gradient(100deg, rgb(255 255 255 / 0) 0%, rgb(255 255 255 / 0.55) 50%, rgb(255 255 255 / 0) 100%);
+        mix-blend-mode: soft-light; opacity: 0; }
+      #lk-url { position: absolute; left: 190px; top: 790px; width: 700px; height: 124px; border-radius: 62px;
+        display: flex; align-items: center; justify-content: center; gap: 22px;
+        font-family: "Manrope", sans-serif; font-weight: 700; font-size: 54px; color: #fff; letter-spacing: -0.01em;
+        background: rgb(255 255 255 / 0.08); border: 1.5px solid rgb(255 255 255 / 0.26); }
+      #lk-dealer { position: absolute; left: 0; right: 0; top: 990px; display: flex; flex-direction: column; align-items: center; gap: 18px; }
+      #lk-dealer .t { font-family: "Source Sans 3", sans-serif; font-weight: 600; font-size: 32px; letter-spacing: 0.14em; color: rgb(255 255 255 / 0.82); }
+      #lk-dealer .card { width: 300px; height: 118px; border-radius: 22px; background: #fff; display: flex; align-items: center; justify-content: center; }
+      #lk-dealer .card img { width: 258px; height: auto; display: block; }
+
+      #flash { position: absolute; inset: 0; background: #fff; opacity: 0; z-index: 50; pointer-events: none; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="33" data-width="1080" data-height="1920">
+
+      <!-- ===== HOOK (0 - 1.40): pool break, slowed so the impact lands on the cut ===== -->
+      <div class="kb" id="kb-hook"><div class="pz" id="pz-hook">
+        <video id="v-hook" class="clip" src="assets/footage/hook-pool.mp4" playsinline data-has-audio="true" data-volume="0.5"
+          data-start="0" data-duration="1.40" data-media-start="0" data-playback-rate="0.85" data-track-index="0"></video>
+      </div></div>
+
+      <!-- ===== BODY: source shots re-cut to the voiceover ===== -->
+      <div class="kb" id="kb-a"><div class="pz" id="pz-a"><video id="v-a" class="clip" src="assets/footage/v001_1080.mp4" muted playsinline data-start="1.40" data-duration="1.55" data-media-start="5.25" data-track-index="0"></video></div></div>
+      <div class="kb" id="kb-b"><div class="pz" id="pz-b"><video id="v-b" class="clip" src="assets/footage/v001_1080.mp4" muted playsinline data-start="2.95" data-duration="1.35" data-media-start="13.67" data-track-index="1"></video></div></div>
+      <div class="kb" id="kb-c"><div class="pz" id="pz-c"><video id="v-c" class="clip" src="assets/footage/v001_1080.mp4" muted playsinline data-start="4.30" data-duration="1.55" data-media-start="8.42" data-track-index="0"></video></div></div>
+      <div class="kb" id="kb-d"><div class="pz" id="pz-d"><video id="v-d" class="clip" src="assets/footage/v001_1080.mp4" muted playsinline data-start="5.85" data-duration="2.35" data-media-start="10.62" data-track-index="1"></video></div></div>
+      <div class="kb" id="kb-e1"><div class="pz" id="pz-e1"><video id="v-e1" class="clip" src="assets/footage/v001_1080.mp4" muted playsinline data-start="8.20" data-duration="3.20" data-media-start="20.40" data-track-index="0"></video></div></div>
+      <div class="kb" id="kb-e2"><div class="pz" id="pz-e2"><video id="v-e2" class="clip" src="assets/footage/v001_1080.mp4" muted playsinline data-start="11.40" data-duration="2.00" data-media-start="15.00" data-track-index="1"></video></div></div>
+      <div class="kb" id="kb-f"><div class="pz" id="pz-f"><video id="v-f" class="clip" src="assets/footage/v001_1080.mp4" muted playsinline data-start="13.40" data-duration="2.00" data-media-start="17.70" data-track-index="0"></video></div></div>
+      <div class="kb" id="kb-g"><div class="pz" id="pz-g"><video id="v-g" class="clip" src="assets/footage/v001_1080.mp4" muted playsinline data-start="15.40" data-duration="4.25" data-media-start="24.40" data-track-index="1"></video></div></div>
+      <div class="kb" id="kb-h"><div class="pz" id="pz-h"><video id="v-h" class="clip" src="assets/footage/v001_1080.mp4" muted playsinline data-start="19.65" data-duration="1.43" data-media-start="1.87" data-track-index="0"></video></div></div>
+      <div class="kb" id="kb-i"><div class="pz" id="pz-i"><video id="v-i" class="clip" src="assets/footage/v001_1080.mp4" muted playsinline data-start="21.08" data-duration="1.27" data-media-start="6.80" data-track-index="1"></video></div></div>
+      <div class="kb" id="kb-j"><div class="pz" id="pz-j"><video id="v-j" class="clip" src="assets/footage/v001_1080.mp4" muted playsinline data-start="22.35" data-duration="1.80" data-media-start="0.10" data-playback-rate="0.6" data-track-index="0"></video></div></div>
+
+      <!-- dynamic status pill (covers the removed sticker for the whole body) -->
+      <div id="pill" class="clip" data-start="1.40" data-duration="22.75" data-track-index="4">
+        <div class="ps" id="ps1">Abarth 595</div>
+        <div class="ps" id="ps2">
+          <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg>
+          <span>Searching UK vendors</span><span class="dot3"><i></i><i></i><i></i></span>
+        </div>
+        <div class="ps" id="ps3">
+          <svg width="50" height="50" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="11" fill="#7AC943"/><path id="ps3-tick" d="M7 12.4l3.2 3.2L17.2 8.6" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="16" stroke-dashoffset="16"/></svg>
+          <span>Abarth 595 · F3 MWW</span>
+        </div>
+        <div class="ps" id="ps4">
+          <svg width="40" height="48" viewBox="0 0 20 24" fill="none" stroke="#fff" stroke-width="2.2"><path d="M10 22s7-7.1 7-12.4A7 7 0 0 0 3 9.6C3 14.9 10 22 10 22z"/><circle cx="10" cy="9.6" r="2.6"/></svg>
+          <span>B&amp;F Cars · Northampton</span>
+        </div>
+        <div class="ps" id="ps5">
+          <svg width="50" height="50" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="11" fill="#7AC943"/><path id="ps5-tick" d="M7 12.4l3.2 3.2L17.2 8.6" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="16" stroke-dashoffset="16"/></svg>
+          <span>Buyer connected</span>
+        </div>
+        <div id="pill-sheen"></div>
+      </div>
+
+      <!-- featured dealer badge -->
+      <div id="dealer" class="clip" data-start="15.85" data-duration="3.65" data-track-index="5">
+        <div class="card" id="dealer-card"><div class="k" id="dealer-kick">FEATURED DEALER</div><img src="assets/brand/bnf-logo.png" alt="B&amp;F Cars Northampton" /></div>
+      </div>
+
+      <!-- ===== END CARD (24.0 - 33.0) ===== -->
+      <div id="end" class="clip" data-start="23.92" data-duration="9.08" data-track-index="2">
+        <div class="glow" id="glow-g" data-layout-allow-overflow></div>
+        <div class="glow" id="glow-r" data-layout-allow-overflow></div>
+        <div id="frame"><img id="frame-img" src="assets/img/showroom.png" alt="CarVendors and B&amp;F Cars forecourt, Northampton" /></div>
+        <div id="lockup">
+          <div id="lk-logo"><img src="assets/brand/cv-logo-light.png" alt="CarVendors.co.uk" /><div id="lk-sheen"></div></div>
+          <div id="lk-url">carvendors.co.uk
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#7AC943" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </div>
+          <div id="lk-dealer"><div class="t">FEATURED DEALER</div><div class="card"><img src="assets/brand/bnf-logo.png" alt="B&amp;F Cars" /></div></div>
+        </div>
+      </div>
+
+      <div id="h-hook-card" data-composition-id="hook-card" data-composition-src="compositions/hook-card.html" data-variable-values='{"text": "Wait for it…", "y": 640, "size": 56}'
+        data-start="0.12" data-duration="1.24" data-track-index="6" data-track-kind="graphics" data-width="1080" data-height="1920"></div>
+      <div id="h-logo" data-composition-id="logo" data-composition-src="compositions/logo.html" data-variable-values='{"exit": true, "y": 150}'
+        data-start="1.4" data-duration="22.5" data-track-index="7" data-track-kind="graphics" data-width="1080" data-height="1920"></div>
+      <div id="h-kw-sporty" data-composition-id="kw-sporty" data-composition-src="compositions/kw-sporty.html" data-variable-values='{"word": "Sporty", "y": 620, "size": 150}'
+        data-start="1.45" data-duration="1.48" data-track-index="6" data-track-kind="graphics" data-width="1080" data-height="1920"></div>
+      <div id="h-hl-reliable" data-composition-id="hl-reliable" data-composition-src="compositions/hl-reliable.html" data-variable-values='{"line1": "Reliable", "line2": "", "y": 620, "size": 170, "dot": true}'
+        data-start="2.97" data-duration="1.31" data-track-index="6" data-track-kind="graphics" data-width="1080" data-height="1920"></div>
+      <div id="h-hl-easy" data-composition-id="hl-easy" data-composition-src="compositions/hl-easy.html" data-variable-values='{"line1": "Easy on", "line2": "the wallet", "y": 620, "size": 150, "dot": true}'
+        data-start="4.38" data-duration="1.45" data-track-index="6" data-track-kind="graphics" data-width="1080" data-height="1920"></div>
+      <div id="h-list-wish" data-composition-id="list-wish" data-composition-src="compositions/list-wish.html" data-variable-values='{"items": "Sporty|Reliable|Easy on the wallet", "y": 640, "size": 52}'
+        data-start="5.92" data-duration="2.22" data-track-index="6" data-track-kind="graphics" data-width="1080" data-height="1920"></div>
+      <div id="h-card-network" data-composition-id="card-network" data-composition-src="compositions/card-network.html" data-variable-values='{"text": "Trusted UK vendor network", "y": 640, "size": 54}'
+        data-start="9.0" data-duration="2.32" data-track-index="6" data-track-kind="graphics" data-width="1080" data-height="1920"></div>
+      <div id="h-kw-free" data-composition-id="kw-free" data-composition-src="compositions/kw-free.html" data-variable-values='{"lead": "Completely", "word": "free", "y": 640, "size": 130}'
+        data-start="11.5" data-duration="1.82" data-track-index="6" data-track-kind="graphics" data-width="1080" data-height="1920"></div>
+      <div id="h-hl-match" data-composition-id="hl-match" data-composition-src="compositions/hl-match.html" data-variable-values='{"line1": "Match", "line2": "found", "y": 640, "size": 176, "dot": true}'
+        data-start="13.72" data-duration="1.62" data-track-index="6" data-track-kind="graphics" data-width="1080" data-height="1920"></div>
+      <div id="h-hl-turn" data-composition-id="hl-turn" data-composition-src="compositions/hl-turn.html" data-variable-values='{"line1": "Your turn", "line2": "", "y": 330, "size": 150, "dot": true}'
+        data-start="24.38" data-duration="1.0" data-track-index="8" data-track-kind="graphics" data-width="1080" data-height="1920"></div>
+      <div id="h-hl-dream" data-composition-id="hl-dream" data-composition-src="compositions/hl-dream.html" data-variable-values='{"line1": "Tell us your", "line2": "dream car", "y": 330, "size": 118, "dot": true}'
+        data-start="25.36" data-duration="2.96" data-track-index="8" data-track-kind="graphics" data-width="1080" data-height="1920"></div>
+      <div id="h-kw-source" data-composition-id="kw-source" data-composition-src="compositions/kw-source.html" data-variable-values='{"lead": "We’ll source it,", "word": "free.", "layout": "inline", "y": 1130, "size": 66}'
+        data-start="26.95" data-duration="1.37" data-track-index="8" data-track-kind="graphics" data-width="1080" data-height="1920"></div>
+      <div id="h-captions" data-composition-id="captions" data-composition-src="compositions/captions.html" data-variable-values='{"chunks": "[{\"s\": 6.1, \"e\": 7.55, \"w\": [[\"That\", 6.1], [\"was\", 6.28], [\"one\", 6.55], [\"buyer&#39;s\", 6.84], [\"wish\", 7.33]]}, {\"s\": 7.55, \"e\": 7.82, \"w\": [[\"list.\", 7.55]]}, {\"s\": 8.4, \"e\": 10.31, \"w\": [[\"So\", 8.4], [\"we\", 8.72], [\"searched\", 8.9], [\"our\", 9.33], [\"trusted\", 9.53], [\"UK\", 9.9]]}, {\"s\": 10.31, \"e\": 12.5, \"w\": [[\"vendor\", 10.31], [\"network,\", 10.86], [\"completely\", 11.6]]}, {\"s\": 12.5, \"e\": 13.37, \"w\": [[\"free\", 12.5], [\"of\", 12.72], [\"charge.\", 12.82]]}, {\"s\": 14.84, \"e\": 18.11, \"w\": [[\"An\", 14.84], [\"Abarth\", 15.02], [\"595,\", 15.62], [\"at\", 16.91], [\"B&amp;F\", 17.15], [\"Cars,\", 17.63]]}, {\"s\": 18.17, \"e\": 18.87, \"w\": [[\"Northampton.\", 18.17]]}, {\"s\": 19.32, \"e\": 21.06, \"w\": [[\"We\", 19.32], [\"connected\", 19.47], [\"them,\", 19.95], [\"and\", 20.51], [\"just\", 20.8]]}, {\"s\": 21.06, \"e\": 21.65, \"w\": [[\"like\", 21.06], [\"that,\", 21.3]]}]"}'
+        data-start="0.0" data-duration="24.0" data-track-index="9" data-track-kind="captions" data-width="1080" data-height="1920"></div>
+      <div id="h-hl-sold" data-composition-id="hl-sold" data-composition-src="compositions/hl-sold.html" data-variable-values='{"line1": "Sourced", "line2": "&amp; sold", "y": 640, "size": 166, "dot": false}'
+        data-start="21.55" data-duration="2.3" data-track-index="6" data-track-kind="graphics" data-width="1080" data-height="1920"></div>
+      <!-- GLASS:INSERT -->
+
+      <!-- ===== AUDIO ===== -->
+      <audio id="vo" src="assets/audio/vo.wav" data-start="1.40" data-duration="29.64" data-track-index="10" data-volume="1"></audio>
+      <audio id="music" src="assets/audio/music.mp3" data-start="1.40" data-duration="31.60" data-media-start="11.40" data-track-index="11"
+        data-automation='{"version":1,"lanes":[{"target":"volume","points":[{"t":0,"v":0},{"t":0.3,"v":0.16},{"t":4.45,"v":0.16},{"t":4.75,"v":0.07},{"t":29.35,"v":0.07},{"t":29.9,"v":0.24},{"t":31.6,"v":0.24}]}]}'></audio>
+      <audio id="sfx-impact" src="assets/audio/impact-hit.mp3" data-start="1.33" data-duration="1.0" data-track-index="12" data-volume="0.85"></audio>
+      <audio id="sfx-tick1" src="assets/audio/tick.mp3" data-start="6.12" data-duration="0.3" data-track-index="13" data-volume="0.45"></audio>
+      <audio id="sfx-free" src="assets/audio/whoosh-soft.mp3" data-start="12.35" data-duration="0.6" data-track-index="12" data-volume="0.45"></audio>
+      <audio id="sfx-whip1" src="assets/audio/whoosh-fast.mp3" data-start="13.30" data-duration="0.48" data-track-index="13" data-volume="0.55"></audio>
+      <audio id="sfx-shutter" src="assets/audio/shutter.mp3" data-start="13.60" data-duration="0.4" data-track-index="12" data-volume="0.65"></audio>
+      <audio id="sfx-dealer" src="assets/audio/whoosh-soft.mp3" data-start="15.80" data-duration="0.6" data-track-index="13" data-volume="0.35"></audio>
+      <audio id="sfx-whip2" src="assets/audio/whoosh-fast.mp3" data-start="23.86" data-duration="0.48" data-track-index="12" data-volume="0.65"></audio>
+      <audio id="sfx-tick2" src="assets/audio/tick.mp3" data-start="28.62" data-duration="0.3" data-track-index="13" data-volume="0.5"></audio>
+
+      <div id="flash"></div>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+
+      // ---------- footage drift (Ken Burns) + entry punches ----------
+      const shots = [
+        // id, start, dur, scale from -> to, x from -> to
+        ["hook", 0.00, 1.40, 1.00, 1.10, 0, 0],
+        ["a", 1.40, 1.55, 1.05, 1.11, -14, 10],
+        ["b", 2.95, 1.35, 1.10, 1.04, 12, -8],
+        ["c", 4.30, 1.55, 1.04, 1.10, 0, -16],
+        ["d", 5.85, 2.35, 1.10, 1.03, -10, 10],
+        ["e1", 8.20, 3.20, 1.03, 1.11, 10, -10],
+        ["e2", 11.40, 2.00, 1.10, 1.04, -12, 12],
+        ["f", 13.40, 2.00, 1.03, 1.06, 0, 0],
+        ["g", 15.40, 4.25, 1.02, 1.10, 0, -10],
+        ["h", 19.65, 1.43, 1.10, 1.04, 10, -10],
+        ["i", 21.08, 1.27, 1.04, 1.10, -10, 10],
+        ["j", 22.35, 1.80, 1.03, 1.09, 0, 0],
+      ];
+      shots.forEach(([id, s, d, s0, s1, x0, x1]) => {
+        tl.fromTo("#kb-" + id, { scale: s0, x: x0 }, { scale: s1, x: x1, duration: d, ease: "none", immediateRender: false }, s);
+      });
+      // every hard cut lands with a small settle punch (After-Effects style ease-out)
+      [["b", 2.95], ["c", 4.30], ["d", 5.85], ["e1", 8.20], ["e2", 11.40], ["g", 15.40], ["h", 19.65], ["i", 21.08], ["j", 22.35]].forEach(([id, s]) => {
+        tl.fromTo("#pz-" + id, { scale: 1.07 }, { scale: 1, duration: 0.42, ease: "expo.out", immediateRender: false }, s);
+      });
+      // hook: slow push toward the ball, then impact cut with a zoom-blur landing on shot A
+      tl.fromTo("#pz-hook", { scale: 1 }, { scale: 1.16, duration: 0.25, ease: "power2.in", immediateRender: false }, 1.15);
+      tl.fromTo("#pz-a", { scale: 1.32, filter: "blur(16px)" }, { scale: 1, filter: "blur(0px)", duration: 0.55, ease: "expo.out", immediateRender: false }, 1.40);
+      // whip into F, then the "Match found" camera punch
+      tl.fromTo("#pz-f", { x: 260, filter: "blur(18px)" }, { x: 0, filter: "blur(0px)", duration: 0.32, ease: "power3.out", immediateRender: false }, 13.40);
+      tl.fromTo("#kb-f", { scale: 1.03 }, { scale: 1.16, duration: 0.6, ease: "expo.out", immediateRender: false }, 13.76);
+      // whip pan out of the body into the end card
+      tl.fromTo("#pz-j", { x: 0, filter: "blur(0px)" }, { x: -900, filter: "blur(22px)", duration: 0.26, ease: "power3.in", immediateRender: false }, 23.86);
+
+      // ---------- flash frames ----------
+      tl.fromTo("#flash", { opacity: 0 }, { opacity: 0.9, duration: 0.05, ease: "none", immediateRender: false }, 1.36)
+        .to("#flash", { opacity: 0, duration: 0.32, ease: "power2.out" }, 1.41)
+        .fromTo("#flash", { opacity: 0 }, { opacity: 0.45, duration: 0.04, ease: "none", immediateRender: false }, 13.74)
+        .to("#flash", { opacity: 0, duration: 0.24, ease: "power2.out" }, 13.78);
+
+      // ---------- dynamic pill ----------
+      tl.fromTo("#pill", { scale: 0.94 }, { scale: 1, duration: 0.55, ease: "expo.out", immediateRender: false }, 1.40);
+      const pin = (id, t, dur = 0.42) => tl.fromTo(id, { opacity: 0, y: 46, filter: "blur(6px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: dur, ease: "expo.out", immediateRender: false }, t);
+      const pout = (id, t) => tl.fromTo(id, { opacity: 1, y: 0, filter: "blur(0px)" }, { opacity: 0, y: -46, filter: "blur(6px)", duration: 0.24, ease: "power2.in", immediateRender: false }, t);
+      tl.set("#ps1", { opacity: 1 }, 1.40);
+      tl.fromTo("#ps1", { scale: 0.9 }, { scale: 1, duration: 0.6, ease: "expo.out", immediateRender: false }, 1.40);
+      pout("#ps1", 8.10); pin("#ps2", 8.30);
+      pout("#ps2", 13.30); pin("#ps3", 13.50);
+      tl.fromTo("#ps3-tick", { attr: { "stroke-dashoffset": 16 } }, { attr: { "stroke-dashoffset": 0 }, duration: 0.35, ease: "power2.out", immediateRender: false }, 13.80);
+      pout("#ps3", 15.30); pin("#ps4", 15.50);
+      pout("#ps4", 19.55); pin("#ps5", 19.75);
+      tl.fromTo("#ps5-tick", { attr: { "stroke-dashoffset": 16 } }, { attr: { "stroke-dashoffset": 0 }, duration: 0.35, ease: "power2.out", immediateRender: false }, 20.05);
+      // searching dots: baked stepped schedule (deterministic)
+      for (let k = 0; k < 14; k++) {
+        const t = 8.55 + k * 0.33, i = (k % 3) + 1;
+        tl.fromTo(`#ps2 .dot3 i:nth-child(${i})`, { opacity: 1 }, { opacity: 0.25, duration: 0.33, ease: "power1.out", immediateRender: false }, t);
+      }
+      // light sheen passes across the glass (searching + on each state change)
+      [[1.75, 0.9], [8.6, 1.1], [10.2, 1.1], [11.8, 1.1], [13.55, 0.8], [15.55, 0.8], [19.8, 0.8]].forEach(([t, d]) => {
+        tl.fromTo("#pill-sheen", { x: -220, opacity: 1 }, { x: 700, opacity: 1, duration: d, ease: "power2.inOut", immediateRender: false }, t);
+        tl.set("#pill-sheen", { opacity: 0 }, t + d);
+      });
+      tl.fromTo("#pill", { x: 0 }, { x: -1100, duration: 0.26, ease: "power3.in", immediateRender: false }, 23.86);
+
+      // ---------- featured dealer badge ----------
+      tl.fromTo("#dealer-kick", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.4, ease: "expo.out", immediateRender: false }, 16.20);
+      tl.fromTo("#dealer-card", { clipPath: "inset(0 100% 0 0 round 26px)" }, { clipPath: "inset(0 0% 0 0 round 26px)", duration: 0.5, ease: "expo.out", immediateRender: false }, 16.05);
+      tl.fromTo("#dealer-card img", { x: -30, opacity: 0 }, { x: 0, opacity: 1, duration: 0.5, ease: "expo.out", immediateRender: false }, 16.15);
+      tl.to("#dealer-card", { opacity: 0, y: -10, duration: 0.22, ease: "power2.in" }, 19.25);
+
+      // ---------- end card ----------
+      tl.fromTo("#end", { x: 1080, filter: "blur(20px)" }, { x: 0, filter: "blur(0px)", duration: 0.32, ease: "power3.out", immediateRender: false }, 23.92);
+      tl.fromTo("#glow-g", { x: 0, y: 0, scale: 1 }, { x: 120, y: 80, scale: 1.12, duration: 9, ease: "sine.inOut", immediateRender: false }, 23.92);
+      tl.fromTo("#glow-r", { x: 0, y: 0, scale: 1.1 }, { x: -100, y: -60, scale: 1, duration: 9, ease: "sine.inOut", immediateRender: false }, 23.92);
+      tl.fromTo("#frame", { clipPath: "inset(50% 0% 50% 0% round 32px)" }, { clipPath: "inset(0% 0% 0% 0% round 32px)", duration: 0.7, ease: "expo.out", immediateRender: false }, 24.30);
+      tl.fromTo("#frame-img", { scale: 1.28 }, { scale: 1.04, duration: 1.0, ease: "expo.out", immediateRender: false }, 24.30);
+      tl.fromTo("#frame-img", { scale: 1.04, x: 0 }, { scale: 1.16, x: -26, duration: 2.9, ease: "none", immediateRender: false }, 25.30);
+      tl.to("#frame", { opacity: 0, scale: 0.96, duration: 0.35, ease: "power2.in" }, 28.30);
+      // lockup
+      tl.set("#lockup", { opacity: 1 }, 23.92);
+      tl.fromTo("#lk-logo", { clipPath: "inset(0 100% 0 0)", y: 20 }, { clipPath: "inset(0 0% 0 0)", y: 0, duration: 0.8, ease: "expo.out", immediateRender: false }, 28.65);
+      tl.fromTo("#lk-sheen", { x: -240, opacity: 1 }, { x: 900, opacity: 1, duration: 1.1, ease: "power2.inOut", immediateRender: false }, 29.6);
+      tl.set("#lk-sheen", { opacity: 0 }, 30.7);
+      tl.fromTo("#lk-url", { opacity: 0, y: 30, scale: 0.96 }, { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "expo.out", immediateRender: false }, 28.95);
+      tl.fromTo("#lk-dealer", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, ease: "expo.out", immediateRender: false }, 29.30);
+      tl.fromTo("#lk-url", { scale: 1 }, { scale: 1.03, duration: 0.9, ease: "sine.inOut", yoyo: true, repeat: 1, immediateRender: false }, 30.9);
+      // hide lockup pieces before their entrance
+      tl.set(["#lk-logo"], { clipPath: "inset(0 100% 0 0)" }, 23.92);
+      tl.set(["#lk-url", "#lk-dealer"], { opacity: 0 }, 23.92);
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

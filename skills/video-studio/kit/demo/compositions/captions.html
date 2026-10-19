@@ -1,0 +1,41 @@
+<!doctype html>
+<html>
+  <head><meta charset="UTF-8" /></head>
+  <body>
+    <template>
+      <style>
+        #root { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+        #cap-band { position: absolute; left: 70px; right: 70px; top: 1250px; height: 170px; }
+        .cap-group { position: absolute; left: 0; right: 0; top: 0; display: flex; justify-content: center; opacity: 0; }
+        .cap-line { display: block; max-width: 940px; text-align: center; font-family: "Montserrat", sans-serif; font-weight: 800;
+          font-size: 64px; line-height: 1.18; color: #ffffff; text-shadow: 0 3px 0 #111311, 0 0 22px rgb(0 0 0 / 65%); }
+        .cap-w { display: inline-block; margin: 0 0.02em; padding: 0 0.12em; border-radius: 10px; }
+      </style>
+      <div id="root" data-composition-id="captions" data-width="1080" data-height="1920">
+        <div id="cap-band"></div>
+      </div>
+      <script>
+        const GROUPS = [{"s": 0.39, "e": 2.15, "w": [["New", 0.44, 0.6], ["to", 0.68, 0.76], ["the", 0.8, 0.84], ["UK…", 0.92, 2.12]]}, {"s": 2.15, "e": 3.91, "w": [["he", 2.2, 2.36], ["needed", 2.48, 2.6], ["a", 2.68, 2.76], ["car.", 2.84, 3.8]]}, {"s": 3.91, "e": 4.55, "w": [["But", 3.96, 4.12], ["where", 4.2, 4.36], ["do", 4.4, 4.44], ["you", 4.48, 4.52]]}, {"s": 4.55, "e": 5.55, "w": [["even", 4.6, 4.84], ["start?", 4.92, 5.88]]}, {"s": 5.55, "e": 6.59, "w": [["He", 5.6, 5.76], ["started", 5.84, 6.16], ["looking", 6.24, 6.56]]}, {"s": 6.59, "e": 7.63, "w": [["online.", 6.64, 7.6]]}, {"s": 7.63, "e": 8.51, "w": [["It", 7.68, 7.84], ["seemed", 7.88, 8.16], ["simple", 8.24, 8.48]]}, {"s": 8.51, "e": 9.84, "w": [["enough.", 8.56, 9.44]]}];
+        const band = document.getElementById("cap-band");
+        const tl = gsap.timeline({ paused: true });
+        GROUPS.forEach(function (g, gi) {
+          const el = document.createElement("div"); el.className = "cap-group"; el.id = "cap-g" + gi;
+          const line = document.createElement("div"); line.className = "cap-line"; line.id = "cap-l" + gi;
+          g.w.forEach(function (w, wi) {
+            const s = document.createElement("span"); s.className = "cap-w"; s.id = "cap-g" + gi + "-w" + wi; s.textContent = w[0]; line.appendChild(s);
+          });
+          el.appendChild(line); band.appendChild(el);
+          tl.set(el, { opacity: 1 }, g.s);
+          tl.fromTo(line, { y: 14, scale: 0.94 }, { y: 0, scale: 1, duration: 0.16, ease: "back.out(2)" }, g.s);
+          g.w.forEach(function (w, wi) {
+            const sel = "#cap-g" + gi + "-w" + wi;
+            tl.set(sel, { backgroundColor: "#f7d117", color: "#111311", textShadow: "none" }, w[1]);
+            tl.set(sel, { backgroundColor: "rgba(0,0,0,0)", color: "#ffffff", textShadow: "0 3px 0 #111311, 0 0 22px rgba(0,0,0,0.65)" }, Math.min(w[2], g.e));
+          });
+          tl.set(el, { opacity: 0 }, g.e);
+        });
+        window.__timelines["captions"] = tl;
+      </script>
+    </template>
+  </body>
+</html>

@@ -1,0 +1,128 @@
+<!doctype html>
+<!--
+  headline  (CarVendors x B&F big editorial headline, 1080x1920)
+
+  Manrope Bold white, tight leading 0.95, tracking -0.02em, max 2 lines (one variable per line, never
+  wraps). Each line rises out of its own overflow-hidden mask (After-Effects style line reveal, expo.out,
+  no bounce). Optional oblique variant for detail scenes and an optional small CarVendors-green full stop.
+  Legibility comes from a very soft shadow only, never a box. A line that would be wider than maxW makes
+  the whole headline scale down to fit (both lines keep the same size).
+
+  Variables (host data-variable-values):
+    line1    string   first line                                    "Match"
+    line2    string   second line ("" for a one-line headline)      "found."
+    size     number   font px (120-170)                             156
+    x, y     number   top-left in canvas px                         72, 560
+    maxW     number   max line width px (safe zone 72-900)          828
+    italic   boolean  restrained oblique (9deg, synthesised)        false
+    dot      boolean  green full stop at the end (colours an
+                      existing final "." or adds one)               true
+    green    color    full-stop colour (CarVendors logo green)      "#7AC943"
+    delay    number   entrance start, s after the host start        0.05
+    stagger  number   seconds between line reveals                  0.09
+    exit     boolean  220 ms fade/lift out at the end of the slot   true
+
+  Timing: each line 480 ms, yPercent 130 -> 0 inside its mask, expo.out; line 2 starts +stagger.
+  Exit 220 ms (opacity + 10 px lift, power2.in) ending 20 ms before the slot ends.
+
+  Mount:
+    python3 tools/mount.py add . headline hl-1 --start 0.5 --dur 2.5 --track 2 \
+      --vars '{"line1":"Match","line2":"found.","y":560}'
+  Needs assets/fonts/Manrope-Bold.ttf. The timeline is built after the font has loaded
+  (document.fonts.load) so the fit measurement uses real glyph widths.
+-->
+<html
+  data-composition-variables='[
+    {"id":"line1","type":"string","label":"Line 1","default":"Match"},
+    {"id":"line2","type":"string","label":"Line 2","default":"found."},
+    {"id":"size","type":"number","label":"Size (px)","default":156,"min":60,"max":220},
+    {"id":"x","type":"number","label":"Left (px)","default":72,"min":0,"max":1000},
+    {"id":"y","type":"number","label":"Top (px)","default":560,"min":0,"max":1900},
+    {"id":"maxW","type":"number","label":"Max width (px)","default":828,"min":200,"max":1000},
+    {"id":"italic","type":"boolean","label":"Oblique","default":false},
+    {"id":"dot","type":"boolean","label":"Green full stop","default":true},
+    {"id":"green","type":"color","label":"Full-stop colour","default":"#7AC943"},
+    {"id":"delay","type":"number","label":"Entrance delay (s)","default":0.05,"min":0,"max":5,"step":0.05},
+    {"id":"stagger","type":"number","label":"Line stagger (s)","default":0.09,"min":0,"max":1,"step":0.01},
+    {"id":"exit","type":"boolean","label":"Exit at end","default":true}
+  ]'
+>
+  <head><meta charset="UTF-8" /></head>
+  <body>
+    <template>
+      <style>
+        @font-face { font-family: "Manrope"; src: url("../assets/fonts/Manrope-Bold.ttf") format("truetype"); font-weight: 700; font-style: normal; }
+        #hl-dream { position: absolute; inset: 0; pointer-events: none; }
+        #hl-dream .hl-box {
+          position: absolute; left: 72px; top: 560px;
+          font-family: "Manrope", sans-serif; font-weight: 700; font-size: 156px;
+          line-height: 0.95; letter-spacing: -0.02em; color: #fff;
+        }
+        #hl-dream .hl-box.is-italic { font-style: oblique 9deg; }
+        /* The mask is bigger than the line box (padding) so ascenders, descenders, the slant and the soft
+           shadow are not clipped; the negative margin keeps the 0.95 leading intact. */
+        #hl-dream .hl-mask { display: block; overflow: hidden; padding: 0.12em 0.3em 0.2em 0.2em; margin: -0.12em -0.3em -0.2em -0.2em; }
+        #hl-dream .hl-line {
+          display: block; white-space: nowrap; width: max-content;
+          text-shadow: 0 2px 32px rgb(0 0 0 / 0.26), 0 1px 3px rgb(0 0 0 / 0.16);
+        }
+        #hl-dream .hl-dot { color: var(--green, #7AC943); }
+      </style>
+      <div id="hl-dream" data-composition-id="hl-dream" data-width="1080" data-height="1920">
+        <div class="hl-box"></div>
+      </div>
+      <script>
+        (function () {
+          const ID = "hl-dream", D = 2.96;
+          const DEF = { line1: "Match", line2: "found.", size: 156, x: 72, y: 560, maxW: 828, italic: false, dot: true, green: "#7AC943", delay: 0.05, stagger: 0.09, exit: true };
+          let v = {};
+          try { v = (window.__hyperframes && window.__hyperframes.getVariables && window.__hyperframes.getVariables()) || {}; } catch (e) {}
+          const P = Object.assign({}, DEF, v);
+          const root = document.getElementById(ID);
+          const box = root.querySelector(".hl-box");
+          Object.assign(box.style, { left: P.x + "px", top: P.y + "px", fontSize: P.size + "px" });
+          box.style.setProperty("--green", P.green);
+          if (P.italic) box.classList.add("is-italic");
+          const lines = [P.line1, P.line2].map((s) => String(s || "").trim()).filter(Boolean);
+          const els = lines.map((text, i) => {
+            const mask = document.createElement("div");
+            mask.className = "hl-mask";
+            const line = document.createElement("div");
+            line.className = "hl-line";
+            const last = i === lines.length - 1;
+            if (last && P.dot) {
+              const body = text.endsWith(".") ? text.slice(0, -1) : text;
+              line.textContent = body;
+              const d = document.createElement("span");
+              d.className = "hl-dot";
+              d.textContent = ".";
+              line.appendChild(d);
+            } else {
+              line.textContent = text;
+            }
+            mask.appendChild(line);
+            box.appendChild(mask);
+            return line;
+          });
+
+          function build() {
+            const widest = Math.max(1, ...els.map((e) => e.getBoundingClientRect().width));
+            if (widest > P.maxW) box.style.fontSize = Math.floor(P.size * (P.maxW / widest)) + "px";
+            const tl = gsap.timeline({ paused: true });
+            const t0 = Number(P.delay), st = Number(P.stagger);
+            els.forEach((line, i) => {
+              tl.fromTo(line, { yPercent: 130 }, { yPercent: 0, duration: 0.48, ease: "expo.out" }, t0 + i * st);
+            });
+            if (P.exit) {
+              tl.to(box, { opacity: 0, y: -10, duration: 0.22, ease: "power2.in" }, Math.max(t0 + 0.7, D - 0.24));
+            }
+            window.__timelines[ID] = tl;
+            if (window.__hfForceTimelineRebind) window.__hfForceTimelineRebind();
+          }
+          const font = (P.italic ? "oblique 9deg " : "") + "700 " + P.size + "px Manrope";
+          (document.fonts && document.fonts.load ? document.fonts.load(font) : Promise.resolve()).then(build, build);
+        })();
+      </script>
+    </template>
+  </body>
+</html>

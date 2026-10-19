@@ -1,0 +1,97 @@
+<!doctype html>
+<!--
+  text-cover  (background box laid exactly over old baked-in TikTok text, optionally carrying new text)
+
+  Purpose: the cheap, reliable way to deal with old static text when it must go (price, "TikTok", wrong or
+  off-brand line): instead of inpainting, put a designed box over it for as long as the old text is on screen
+  and write the new line inside. Premium, not a sticker: solid colour, generous padding, one weight change.
+  Leave `text` empty for a pure cover. The box always covers the given rectangle (x, y, w, h in 1080x1920
+  pixels = old text box × 1.875 + ~10 px), and grows if the new text needs more room.
+
+  Variables (host data-variable-values):
+    x, y, w, h  number   rectangle to cover (1080x1920 px)                                  120, 1330, 840, 180
+    text        string   new line(s); "|" = line break; "" = cover only                     ""
+    kicker      string   optional small line above (e.g. "FEATURED")                         ""
+    style       enum     dark (charcoal) | light (white, charcoal text) | accent (accent colour, white text) "dark"
+    accent      color    accent colour for style=accent (derive from the car, muted)        "#B8323A"
+    opacity     number   box opacity for dark style (0.7-1). Below 0.95 the old text may show through.  1
+    size        number   text px (40-64)                                                    52
+    align       enum     left | center                                                     "center"
+    radius      number   corner radius px                                                   22
+    reveal      enum     wipe (left→right) | rise | none (hard on, e.g. when it starts on a cut)  "wipe"
+    delay       number   reveal start, s                                                    0
+    exit        boolean  fade out at the end of the slot                                    true
+
+  Timing: box wipe/rise 260 ms (expo.out), text +90 ms 220 ms; exit 160 ms. If the old text is visible from
+  the very first frame of a shot, use reveal "none" so it is never exposed.
+    python3 ~/.claude/skills/carvendors-studio/tools/mount.py add . text-cover cover1 --start 3 --dur 9 --track 6 \
+      --vars '{"x":150,"y":1330,"w":780,"h":180,"text":"Spacious|family SUV","style":"dark"}'
+-->
+<html
+  data-composition-variables='[
+    {"id":"x","type":"number","label":"x","default":120,"min":0,"max":1080},
+    {"id":"y","type":"number","label":"y","default":1330,"min":0,"max":1920},
+    {"id":"w","type":"number","label":"width","default":840,"min":40,"max":1080},
+    {"id":"h","type":"number","label":"height","default":180,"min":20,"max":1920},
+    {"id":"text","type":"string","label":"New text (| = new line)","default":""},
+    {"id":"kicker","type":"string","label":"Kicker","default":""},
+    {"id":"style","type":"enum","label":"Style","default":"dark","options":[{"value":"dark","label":"Dark"},{"value":"light","label":"White"},{"value":"accent","label":"Accent"}]},
+    {"id":"accent","type":"color","label":"Accent","default":"#B8323A"},
+    {"id":"opacity","type":"number","label":"Box opacity","default":1,"min":0.5,"max":1,"step":0.01},
+    {"id":"size","type":"number","label":"Text size","default":52,"min":28,"max":90},
+    {"id":"align","type":"enum","label":"Align","default":"center","options":[{"value":"left","label":"Left"},{"value":"center","label":"Centre"}]},
+    {"id":"radius","type":"number","label":"Radius","default":22,"min":0,"max":60},
+    {"id":"reveal","type":"enum","label":"Reveal","default":"wipe","options":[{"value":"wipe","label":"Wipe"},{"value":"rise","label":"Rise"},{"value":"none","label":"None"}]},
+    {"id":"delay","type":"number","label":"Delay","default":0,"min":0,"max":10,"step":0.05},
+    {"id":"exit","type":"boolean","label":"Exit at end","default":true}
+  ]'
+>
+  <head><meta charset="UTF-8" /></head>
+  <body>
+    <template>
+      <style>
+        @font-face { font-family: "Manrope"; src: url("../assets/fonts/Manrope-Regular.ttf") format("truetype"); font-weight: 400; font-style: normal; }
+        @font-face { font-family: "Manrope"; src: url("../assets/fonts/Manrope-Bold.ttf") format("truetype"); font-weight: 700; font-style: normal; }
+        #__ID__ { position: absolute; inset: 0; pointer-events: none; }
+        #__ID__ .tc { position: absolute; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center;
+          padding: 18px 34px; font-family: "Manrope", sans-serif; }
+        #__ID__ .tc-k { font-weight: 700; font-size: 22px; letter-spacing: 0.22em; margin-bottom: 10px; opacity: 0.75; }
+        #__ID__ .tc-t { font-weight: 700; line-height: 1.12; letter-spacing: -0.01em; }
+        #__ID__ .tc-t span { display: block; }
+      </style>
+      <div id="__ID__" data-composition-id="__ID__" data-width="1080" data-height="1920">
+        <div class="tc"><div class="tc-k"></div><div class="tc-t"></div></div>
+      </div>
+      <script>
+        (function () {
+          const ID = "__ID__", D = __DUR__;
+          const DEF = { x: 120, y: 1330, w: 840, h: 180, text: "", kicker: "", style: "dark", accent: "#B8323A", opacity: 1, size: 52, align: "center", radius: 22, reveal: "wipe", delay: 0, exit: true };
+          let v = {};
+          try { v = (window.__hyperframes && window.__hyperframes.getVariables && window.__hyperframes.getVariables()) || {}; } catch (e) {}
+          const P = Object.assign({}, DEF, v);
+          const root = document.getElementById(ID);
+          const box = root.querySelector(".tc"), k = root.querySelector(".tc-k"), t = root.querySelector(".tc-t");
+          const bg = P.style === "light" ? "#ffffff" : P.style === "accent" ? P.accent : "rgb(17 19 17 / " + P.opacity + ")";
+          const fg = P.style === "light" ? "#111311" : "#ffffff";
+          Object.assign(box.style, { left: P.x + "px", top: P.y + "px", minWidth: P.w + "px", minHeight: P.h + "px",
+            background: bg, color: fg, borderRadius: P.radius + "px", textAlign: P.align, alignItems: P.align === "left" ? "flex-start" : "center" });
+          t.style.fontSize = P.size + "px";
+          String(P.text || "").split("|").map((s) => s.trim()).filter(Boolean).forEach((s) => { const e = document.createElement("span"); e.textContent = s; t.appendChild(e); });
+          if (P.kicker) k.textContent = P.kicker; else k.remove();
+          const hasText = t.children.length > 0;
+          function build() {
+            const tl = gsap.timeline({ paused: true }), t0 = Number(P.delay);
+            if (P.reveal === "wipe") tl.fromTo(box, { clipPath: "inset(0 100% 0 0 round " + P.radius + "px)" }, { clipPath: "inset(0 0% 0 0 round " + P.radius + "px)", duration: 0.26, ease: "expo.out" }, t0);
+            else if (P.reveal === "rise") tl.fromTo(box, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.26, ease: "expo.out" }, t0);
+            else tl.set(box, { opacity: 1 }, 0);
+            if (hasText) tl.fromTo([k, t].filter((e) => e.isConnected), { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.22, ease: "power3.out", stagger: 0.05 }, t0 + 0.09);
+            if (P.exit) tl.to(box, { opacity: 0, duration: 0.16, ease: "power1.in" }, Math.max(t0 + 0.4, D - 0.18));
+            window.__timelines[ID] = tl;
+            if (window.__hfForceTimelineRebind) window.__hfForceTimelineRebind();
+          }
+          Promise.all([document.fonts.load("700 " + P.size + "px Manrope", "A")]).then(build, build);
+        })();
+      </script>
+    </template>
+  </body>
+</html>

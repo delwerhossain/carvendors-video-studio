@@ -1,0 +1,104 @@
+<!doctype html>
+<!--
+  logo-badge  (fixed CarVendors logo on its own background — the default brand mark for bulk edits)
+
+  Purpose: one consistent, always-readable brand mark that sits in the same place for the whole main video,
+  so no per-shot legibility work is needed. Authentic artwork only (cv-icon-light + cv-wordmark-light on a
+  dark badge, or cv-logo-dark on a white badge). Optional small "Featured dealer: B&F Cars" line inside.
+
+  Variables (host data-variable-values):
+    corner    enum     top-left | top-right | top-center | bottom-left                       "top-left"
+    style     enum     dark (charcoal badge, white logo) | light (white card, dark logo) | clean (no background, soft shadow — reference look, use on calm skies)   "dark"
+    width     number   badge width px (300-460)                                                360
+    credit    boolean  show the dealer line inside the badge                                   true
+    dealer    string   dealer line text                                       "Featured dealer: B&F Cars"
+    opacity   number   badge background opacity (dark style) 0.6-0.9                           0.78
+    margin    number   distance from the frame edges px (keep clear of platform UI)            64
+    top       number   top offset px for top corners (TikTok/Reels top bar ~110-160)          130
+    delay     number   fade-in start, s                                                        0.05
+    exit      boolean  fade out at the end of the slot                                         false
+
+  Timing: 260 ms opacity + 6 px settle, then it stays. Mount it once over the whole main video (hook excluded).
+    python3 ~/.claude/skills/carvendors-studio/tools/mount.py add . logo-badge badge --start 3 --dur 20 --track 8
+  Needs assets/brand/{cv-icon-light,cv-wordmark-light,cv-logo-dark}.png, assets/fonts/Manrope-*.ttf.
+-->
+<html
+  data-composition-variables='[
+    {"id":"corner","type":"enum","label":"Corner","default":"top-left","options":[{"value":"top-left","label":"Top left"},{"value":"top-right","label":"Top right"},{"value":"top-center","label":"Top centre"},{"value":"bottom-left","label":"Bottom left"}]},
+    {"id":"style","type":"enum","label":"Style","default":"dark","options":[{"value":"dark","label":"Dark badge"},{"value":"light","label":"White badge"},{"value":"clean","label":"No background (shadow only)"}]},
+    {"id":"width","type":"number","label":"Badge width (px)","default":360,"min":240,"max":520},
+    {"id":"credit","type":"boolean","label":"Dealer line","default":true},
+    {"id":"dealer","type":"string","label":"Dealer line","default":"Featured dealer: B&F Cars"},
+    {"id":"opacity","type":"number","label":"Badge opacity","default":0.78,"min":0.4,"max":1,"step":0.01},
+    {"id":"margin","type":"number","label":"Edge margin (px)","default":64,"min":20,"max":200},
+    {"id":"top","type":"number","label":"Top offset (px)","default":130,"min":20,"max":400},
+    {"id":"delay","type":"number","label":"Fade-in delay (s)","default":0.05,"min":0,"max":5,"step":0.05},
+    {"id":"exit","type":"boolean","label":"Exit at end","default":false}
+  ]'
+>
+  <head><meta charset="UTF-8" /></head>
+  <body>
+    <template>
+      <style>
+        @font-face { font-family: "Manrope"; src: url("../assets/fonts/Manrope-Regular.ttf") format("truetype"); font-weight: 400; font-style: normal; }
+        @font-face { font-family: "Manrope"; src: url("../assets/fonts/Manrope-Bold.ttf") format("truetype"); font-weight: 700; font-style: normal; }
+        #__ID__ { position: absolute; inset: 0; pointer-events: none; }
+        #__ID__ .lb { position: absolute; box-sizing: border-box; display: flex; flex-direction: column; align-items: flex-start;
+          border-radius: 18px; padding: 16px 20px 15px; opacity: 0; }
+        #__ID__ .lb.dark { background: rgb(17 19 17 / var(--op, 0.78)); border: 1px solid rgb(255 255 255 / 0.10); }
+        #__ID__ .lb.light { background: #fff; border: 1px solid rgb(17 19 17 / 0.06); }
+        #__ID__ .lb.clean { background: none; padding: 0; filter: drop-shadow(0 2px 6px rgb(0 0 0 / 0.45)) drop-shadow(0 0 1px rgb(0 0 0 / 0.4)); }
+        #__ID__ .lb.clean .lb-line { color: #fff; }
+        #__ID__ .lb-row { display: flex; align-items: center; gap: 12px; }
+        #__ID__ .lb img { display: block; height: auto; }
+        #__ID__ .lb-line { margin-top: 9px; font-family: "Manrope", sans-serif; font-size: 22px; line-height: 1; white-space: nowrap; }
+        #__ID__ .lb.dark .lb-line { color: rgb(255 255 255 / 0.88); }
+        #__ID__ .lb.light .lb-line { color: #3a3d3c; }
+        #__ID__ .lb-line b { font-weight: 700; }
+      </style>
+      <div id="__ID__" data-composition-id="__ID__" data-width="1080" data-height="1920">
+        <div class="lb">
+          <div class="lb-row"><img class="lb-icon" src="../assets/brand/cv-icon-light.png" alt="" /><img class="lb-wm" src="../assets/brand/cv-wordmark-light.png" alt="CarVendors.co.uk" /></div>
+          <img class="lb-full" src="../assets/brand/cv-logo-dark.png" alt="CarVendors.co.uk" />
+          <div class="lb-line"></div>
+        </div>
+      </div>
+      <script>
+        (function () {
+          const ID = "__ID__", D = __DUR__;
+          const DEF = { corner: "top-left", style: "dark", width: 360, credit: true, dealer: "Featured dealer: B&F Cars", opacity: 0.78, margin: 64, top: 130, delay: 0.05, exit: false };
+          let v = {};
+          try { v = (window.__hyperframes && window.__hyperframes.getVariables && window.__hyperframes.getVariables()) || {}; } catch (e) {}
+          const P = Object.assign({}, DEF, v);
+          const root = document.getElementById(ID);
+          const b = root.querySelector(".lb"), row = root.querySelector(".lb-row"), full = root.querySelector(".lb-full");
+          const icon = root.querySelector(".lb-icon"), wm = root.querySelector(".lb-wm"), line = root.querySelector(".lb-line");
+          const W = Number(P.width), inner = W - 40;
+          b.classList.add(P.style === "light" ? "light" : P.style === "clean" ? "clean" : "dark");
+          b.style.setProperty("--op", String(P.opacity));
+          b.style.width = W + "px";
+          if (P.style === "light") { row.style.display = "none"; full.style.width = inner + "px"; }
+          else { full.style.display = "none"; const ih = Math.round(inner * 0.16); icon.style.width = icon.style.height = ih + "px"; wm.style.width = (inner - ih - 12) + "px"; }
+          // "Featured dealer: B&F Cars" → label regular, name bold
+          const t = String(P.dealer || ""), k = t.indexOf(":");
+          if (!P.credit || !t) line.style.display = "none";
+          else line.innerHTML = k > 0 ? t.slice(0, k + 1).replace(/&/g, "&amp;") + " <b>" + t.slice(k + 1).trim().replace(/&/g, "&amp;") + "</b>" : t.replace(/&/g, "&amp;");
+          const m = Number(P.margin);
+          if (P.corner === "top-right") { b.style.right = m + "px"; b.style.top = P.top + "px"; }
+          else if (P.corner === "top-center") { b.style.left = "540px"; b.style.top = P.top + "px"; gsap.set(b, { xPercent: -50 }); }
+          else if (P.corner === "bottom-left") { b.style.left = m + "px"; b.style.bottom = "420px"; }
+          else { b.style.left = m + "px"; b.style.top = P.top + "px"; }
+          function build() {
+            const tl = gsap.timeline({ paused: true }), t0 = Number(P.delay);
+            tl.fromTo(b, { opacity: 0, y: 6 }, { opacity: 1, y: 0, duration: 0.26, ease: "power3.out" }, t0);
+            if (P.exit) tl.to(b, { opacity: 0, duration: 0.2, ease: "power1.in" }, Math.max(t0 + 0.5, D - 0.22));
+            window.__timelines[ID] = tl;
+            if (window.__hfForceTimelineRebind) window.__hfForceTimelineRebind();
+          }
+          const imgs = [icon, wm, full].map((im) => (im.complete ? Promise.resolve() : new Promise((r) => { im.onload = im.onerror = r; })));
+          Promise.all([document.fonts.load("400 22px Manrope", "F"), document.fonts.load("700 22px Manrope", "B")].concat(imgs)).then(build, build);
+        })();
+      </script>
+    </template>
+  </body>
+</html>

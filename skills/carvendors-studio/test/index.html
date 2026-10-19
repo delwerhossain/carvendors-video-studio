@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { margin: 0; width: 1080px; height: 1920px; overflow: hidden; background: #000; }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: #000; }
+      #root > div[data-composition-src] { position: absolute; inset: 0; pointer-events: none; }
+      .shot { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    </style>
+  </head>
+  <body>
+    <!--
+      carvendors-studio component test (12 s, 1080x1920, muted footage).
+      Shots from work/footage/shots.json clean ranges of v001_1080.mp4:
+        0.00-2.80  s08 front 3/4 hero (17.70 + 2.80 s at 0.71x)   logo-top + hero-model over the sky
+        2.80-4.80  s07 front corner / headlight (14.00)           detail-line "In the / details."
+        4.80-7.40  s04 side / door stripe (5.20)                  shape-text "Made to / stand out"
+        7.40-9.00  s10 rear 3/4 (24.60)                           verified-feature (2 visible facts)
+        9.00-12.00 outro-real-showroom (real B&F photo)
+      Captions (caption-line) run on two chunks over shots 2 and 3.
+    -->
+    <div id="root" data-composition-id="main" data-start="0" data-duration="12" data-width="1080" data-height="1920">
+      <video id="v-hero" class="clip shot" src="assets/footage/v001_1080.mp4" muted playsinline
+        data-start="0" data-duration="2.8" data-media-start="17.70" data-playback-rate="0.71" data-track-index="0"></video>
+      <video id="v-detail" class="clip shot" src="assets/footage/v001_1080.mp4" muted playsinline
+        data-start="2.8" data-duration="2.0" data-media-start="14.00" data-track-index="1"></video>
+      <video id="v-side" class="clip shot" src="assets/footage/v001_1080.mp4" muted playsinline
+        data-start="4.8" data-duration="2.6" data-media-start="5.20" data-track-index="0"></video>
+      <video id="v-rear" class="clip shot" src="assets/footage/v001_1080.mp4" muted playsinline
+        data-start="7.4" data-duration="1.6" data-media-start="24.60" data-track-index="1"></video>
+
+      <div id="h-logo" data-composition-id="logo" data-composition-src="compositions/logo.html" data-variable-values='{"x": 80, "y": 120}'
+        data-start="0.0" data-duration="9.0" data-track-index="8" data-track-kind="graphics" data-width="1080" data-height="1920"></div>
+      <div id="h-hero-veil" data-composition-id="hero-veil" data-composition-src="compositions/hero-veil.html" data-variable-values='{"x": 200, "y": 318, "w": 740, "h": 226, "opacity": 0.46, "feather": 0.4, "shape": "soft-rect", "delay": 0.1}'
+        data-start="0.0" data-duration="2.8" data-track-index="2" data-track-kind="graphics" data-width="1080" data-height="1920"></div>
+      <div id="h-hero" data-composition-id="hero" data-composition-src="compositions/hero.html" data-variable-values='{"make": "ABARTH", "model": "595", "x": 570, "y": 250, "size": 235}'
+        data-start="0.0" data-duration="2.8" data-track-index="3" data-track-kind="graphics" data-width="1080" data-height="1920"></div>
+      <div id="h-detail" data-composition-id="detail" data-composition-src="compositions/detail.html" data-variable-values='{"line1": "In the", "line2": "details.", "x": 570, "y": 330, "align": "center", "size": 90, "scrim": 0.3}'
+        data-start="2.8" data-duration="2.0" data-track-index="3" data-track-kind="graphics" data-width="1080" data-height="1920"></div>
+      <div id="h-standout" data-composition-id="standout" data-composition-src="compositions/standout.html" data-variable-values='{"line1": "Made to", "word": "stand out", "x": 570, "y": 330, "align": "center", "tilt": -3, "scrim": 0.25}'
+        data-start="4.8" data-duration="2.6" data-track-index="3" data-track-kind="graphics" data-width="1080" data-height="1920"></div>
+      <div id="h-feat" data-composition-id="feat" data-composition-src="compositions/feat.html" data-variable-values='{"items": "Sporty styling|Compact design", "x": 363, "y": 352, "scrim": 0.32}'
+        data-start="7.4" data-duration="1.6" data-track-index="3" data-track-kind="graphics" data-width="1080" data-height="1920"></div>
+      <div id="h-outro" data-composition-id="outro" data-composition-src="compositions/outro.html" data-variable-values='{"src": "../assets/showroom/front-side-view.png", "focus": "79% 50%", "shade": 0.72}'
+        data-start="9.0" data-duration="3.0" data-track-index="4" data-track-kind="graphics" data-width="1080" data-height="1920"></div>
+      <div id="h-captions" data-composition-id="captions" data-composition-src="compositions/captions.html" data-variable-values='{"chunks": "[{\"s\": 3.0, \"e\": 4.65, \"text\": \"A closer look at the Abarth 595.\"}, {\"s\": 5.05, \"e\": 7.25, \"text\": \"Bold side stripes, white mirror caps, black alloys.\"}]"}'
+        data-start="0.0" data-duration="9.0" data-track-index="9" data-track-kind="captions" data-width="1080" data-height="1920"></div>
+      <!-- CV:INSERT -->
+    </div>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

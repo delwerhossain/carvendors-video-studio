@@ -1,0 +1,28 @@
+<!doctype html>
+<html>
+  <head><meta charset="UTF-8" /></head>
+  <body>
+    <template>
+      <!-- Transition: a road-sign panel sweeps across the frame. Mount ~0.9 s long, centred on the cut. -->
+      <style>
+        #wipe-1 { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+        #wipe-1 .k-panel { position: absolute; top: -40px; bottom: -40px; left: 0; width: 1500px; background: #00703c;
+          border-left: 22px solid #ffffff; border-right: 22px solid #ffffff; transform: skewX(-12deg); }
+        #wipe-1 .k-stripe { position: absolute; top: -40px; bottom: -40px; left: 0; width: 160px; background: #f7d117; transform: skewX(-12deg); }
+      </style>
+      <div id="wipe-1" data-composition-id="wipe-1" data-width="1080" data-height="1920">
+        <div class="k-stripe"></div>
+        <div class="k-panel"></div>
+      </div>
+      <script>
+        (function () {
+          const R = "#wipe-1 ", D = 0.8;
+          const tl = gsap.timeline({ paused: true });
+          tl.fromTo(R + ".k-stripe", { x: -1900 }, { x: 1900, duration: D, ease: "power2.inOut" }, 0);
+          tl.fromTo(R + ".k-panel", { x: -1800 }, { x: 1500, duration: D, ease: "power3.inOut" }, 0.04);
+          window.__timelines["wipe-1"] = tl;
+        })();
+      </script>
+    </template>
+  </body>
+</html>

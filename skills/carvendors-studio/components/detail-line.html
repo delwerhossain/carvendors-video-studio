@@ -1,0 +1,151 @@
+<!doctype html>
+<!--
+  detail-line  (CarVendors MODE B editorial two-line headline: "In the / details.")
+
+  Purpose: short editorial line over a tight real close-up (wheel, headlight, badge, trim). Manrope 700
+  white, line-height 1.0, slightly tight tracking, never wraps (each line is one variable; a line that is
+  wider than maxW scales the whole headline down so both lines keep one size). Optional tiny brand-green
+  full stop. No box; optional localized charcoal scrim behind the text only. Ink edges optically aligned.
+
+  Variables (host data-variable-values):
+    line1    string   first line                                              "In the"
+    line2    string   second line ("" = one line)                             "details."
+    x        number   anchor x px (left edge / centre / right edge by align)  80
+    y        number   top of the block px                                     360
+    align    enum     left | center | right                                   "left"
+    size     number   font px (72-92)                                         84
+    maxW     number   max line width px (safe guide 80-870 = 790)             790
+    dot      boolean  green full stop (colours a final "." or adds one)       true
+    green    color    full-stop colour (real CarVendors logo green)           "#7AC943"
+    scrim    number   0-0.55 localized charcoal gradient behind the text      0
+    delay    number   entrance start, s after host start                      0.12
+    stagger  number   seconds between line reveals                            0.07
+    exit     boolean  fade out at the end of the slot                         true
+
+  Timing: each line rises 16 px out of a bottom-up clip mask, 280 ms expo.out; line 2 starts +70 ms.
+  Scrim 200 ms fade with line 1. Exit 180 ms (opacity + 8 px lift, power2.in) ending 20 ms before slot end.
+
+  Mount:
+    python3 ~/.claude/skills/carvendors-studio/tools/mount.py add . detail-line detail --start 2.8 --dur 2 \
+      --vars '{"line1":"In the","line2":"details.","x":80,"y":360,"scrim":0.3}'
+  Needs assets/fonts/Manrope-Bold.ttf.
+-->
+<html
+  data-composition-variables='[
+    {"id":"line1","type":"string","label":"Line 1","default":"In the"},
+    {"id":"line2","type":"string","label":"Line 2","default":"details."},
+    {"id":"x","type":"number","label":"Anchor x (px)","default":80,"min":0,"max":1080},
+    {"id":"y","type":"number","label":"Top (px)","default":360,"min":0,"max":1900},
+    {"id":"align","type":"enum","label":"Align","default":"left","options":[{"value":"left","label":"Left"},{"value":"center","label":"Centre"},{"value":"right","label":"Right"}]},
+    {"id":"size","type":"number","label":"Size (px)","default":84,"min":48,"max":140},
+    {"id":"maxW","type":"number","label":"Max width (px)","default":790,"min":200,"max":1000},
+    {"id":"dot","type":"boolean","label":"Green full stop","default":true},
+    {"id":"green","type":"color","label":"Full-stop colour","default":"#7AC943"},
+    {"id":"scrim","type":"number","label":"Scrim (0-0.55)","default":0,"min":0,"max":0.55,"step":0.01},
+    {"id":"delay","type":"number","label":"Entrance delay (s)","default":0.12,"min":0,"max":5,"step":0.05},
+    {"id":"stagger","type":"number","label":"Line stagger (s)","default":0.07,"min":0,"max":1,"step":0.01},
+    {"id":"exit","type":"boolean","label":"Exit at end","default":true}
+  ]'
+>
+  <head><meta charset="UTF-8" /></head>
+  <body>
+    <template>
+      <style>
+        @font-face { font-family: "Manrope"; src: url("../assets/fonts/Manrope-Bold.ttf") format("truetype"); font-weight: 700; font-style: normal; }
+        #__ID__ { position: absolute; inset: 0; pointer-events: none; }
+        #__ID__ .cv-scrim { position: absolute; left: calc(-21% - 90px); right: calc(-21% - 90px); top: calc(-21% - 90px); bottom: calc(-21% - 90px); opacity: 0; pointer-events: none; }
+        #__ID__ .dl-box {
+          position: absolute; left: 80px; top: 360px; display: flex; flex-direction: column; align-items: flex-start;
+          font-family: "Manrope", sans-serif; font-weight: 700; font-size: 84px; line-height: 1.0;
+          letter-spacing: -0.022em; color: #fff;
+        }
+        #__ID__ .dl-line { position: relative; display: block; white-space: nowrap; text-shadow: 0 1px 2px rgb(0 0 0 / 0.22); }
+        #__ID__ .dl-dot { color: #7AC943; }
+      </style>
+      <div id="__ID__" data-composition-id="__ID__" data-width="1080" data-height="1920">
+        <div class="dl-box"><div class="cv-scrim" data-layout-allow-overflow></div></div>
+      </div>
+      <script>
+        (function () {
+          const ID = "__ID__", D = __DUR__;
+          const DEF = { line1: "In the", line2: "details.", x: 80, y: 360, align: "left", size: 84, maxW: 790, dot: true, green: "#7AC943", scrim: 0, delay: 0.12, stagger: 0.07, exit: true };
+          let v = {};
+          try { v = (window.__hyperframes && window.__hyperframes.getVariables && window.__hyperframes.getVariables()) || {}; } catch (e) {}
+          const P = Object.assign({}, DEF, v);
+          const root = document.getElementById(ID);
+          const box = root.querySelector(".dl-box");
+          const scrim = root.querySelector(".cv-scrim");
+          const al = ["left", "center", "right"].includes(P.align) ? P.align : "left";
+          box.style.alignItems = { left: "flex-start", center: "center", right: "flex-end" }[al];
+          box.style.fontSize = P.size + "px";
+          const lines = [P.line1, P.line2].map((s) => String(s || "").trim()).filter(Boolean);
+          const els = lines.map((text, i) => {
+            const line = document.createElement("div");
+            line.className = "dl-line";
+            if (i === lines.length - 1 && P.dot) {
+              line.textContent = text.endsWith(".") ? text.slice(0, -1) : text;
+              const d = document.createElement("span");
+              d.className = "dl-dot";
+              d.style.color = P.green;
+              d.textContent = ".";
+              line.appendChild(d);
+            } else {
+              line.textContent = text;
+            }
+            box.appendChild(line);
+            return line;
+          });
+
+          const cv = document.createElement("canvas").getContext("2d");
+          function bearings(text, font) {
+            if (!text) return { l: 0, r: 0 };
+            cv.font = font;
+            const m = cv.measureText(text);
+            return { l: -m.actualBoundingBoxLeft, r: m.width - m.actualBoundingBoxRight };
+          }
+          // scrim = first child of the text box, sized in % of the box (no layout measuring: clips that start
+          // later are display:none at build time, so box sizes read 0)
+          function placeScrim(a) {
+            if (!(a > 0)) { scrim.style.display = "none"; return; }
+            const c = (k) => "rgb(17 19 17 / " + (a * k).toFixed(3) + ")";
+            scrim.style.background = "radial-gradient(closest-side, " + c(1) + " 0%, " + c(1) + " 40%, " + c(0.8) + " 58%, " + c(0.46) + " 74%, " + c(0.16) + " 88%, " + c(0) + " 100%)";
+          }
+
+          function build() {
+            let fs = Number(P.size);
+            // canvas width incl. tracking (layout is display:none until the clip starts, so no offsetWidth)
+            cv.font = "700 " + fs + "px Manrope";
+            cv.letterSpacing = (-0.022 * fs).toFixed(2) + "px";
+            const widest = Math.max(1, ...els.map((e) => cv.measureText(e.textContent).width));
+            cv.letterSpacing = "0px";
+            if (widest > P.maxW) { fs = Math.floor(fs * (P.maxW / widest)); box.style.fontSize = fs + "px"; }
+            els.forEach((e) => {
+              const b = bearings(e.textContent, "700 " + fs + "px Manrope");
+              const off = al === "left" ? -b.l : al === "right" ? b.r : (b.r - b.l) / 2;
+              e.style.left = off.toFixed(1) + "px";
+            });
+            box.style.left = P.x + "px";
+            gsap.set(box, { xPercent: al === "left" ? 0 : al === "right" ? -100 : -50 });
+            box.style.top = P.y + "px";
+            placeScrim(Math.min(0.55, Number(P.scrim) || 0));
+
+            const tl = gsap.timeline({ paused: true });
+            const t0 = Number(P.delay), st = Number(P.stagger);
+            if (P.scrim > 0) tl.fromTo(scrim, { opacity: 0 }, { opacity: 1, duration: 0.2, ease: "power1.out" }, t0);
+            els.forEach((line, i) => {
+              tl.fromTo(line, { y: 16, clipPath: "inset(100% -6% -20% -6%)" },
+                { y: 0, clipPath: "inset(-20% -6% -20% -6%)", duration: 0.28, ease: "expo.out" }, t0 + i * st);
+            });
+            if (P.exit) {
+              const te = Math.max(t0 + 0.7, D - 0.2);
+              tl.to(box, { opacity: 0, y: -8, duration: 0.18, ease: "power2.in" }, te);
+            }
+            window.__timelines[ID] = tl;
+            if (window.__hfForceTimelineRebind) window.__hfForceTimelineRebind();
+          }
+          document.fonts.load("700 " + P.size + "px Manrope", lines.join(" ") || "A").then(build, build);
+        })();
+      </script>
+    </template>
+  </body>
+</html>

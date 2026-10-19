@@ -1,0 +1,118 @@
+<!doctype html>
+<!--
+  outro-real-showroom  (CarVendors end card on a REAL showroom photo)
+
+  Purpose: closing CTA. A real B&F showroom photo fills the 1080x1920 frame (object-fit: cover, focus
+  point variable) with a slow 4-6 % push; a charcoal gradient rises from the bottom (to ~65 %) so the copy
+  reads; the full CarVendors logo artwork sits centred around y 1180 with the CTA and the dealer credit
+  under it, all inside y <= 1500. Staggered entrances. No glass, no glow, no boxes.
+
+  Variables (host data-variable-values):
+    src       string   REQUIRED photo path relative to compositions/ (e.g. "../assets/showroom/front.png").
+                       Empty = the component shows only the dark card and logs a warning. Use a real photo.
+    focus     string   object-position of the photo ("50% 50%"; x% picks the slice of a landscape photo)  "50% 50%"
+    push      number   slow zoom over the slot, 0.04-0.06                                                0.05
+    shade     number   gradient darkness at the bottom, 0.5-0.75                                         0.65
+    logoW     number   logo artwork width px                                                             640
+    logoY     number   logo vertical centre px                                                           1180
+    cta       string   CTA line (Manrope 700, 52 px)                         "Explore more at CarVendors.co.uk"
+    credit    string   dealer line (Manrope 400, 32 px)                      "Featured dealer: B&F Cars, Northampton"
+    ctaSize   number   CTA font px                                                                       52
+    fadeIn    number   photo fade-in from charcoal, s (0 = hard cut)                                     0.2
+
+  Timing: photo push runs the whole slot (sine.inOut); logo at +0.25 s, CTA +0.50 s, credit +0.75 s, each
+  320 ms opacity + 14 px rise (power3.out). No exit (it is the last card); cut or fade the master after it.
+
+  Mount:
+    cp /path/to/showroom/front-side-view.png <hf>/assets/showroom/
+    python3 ~/.claude/skills/carvendors-studio/tools/mount.py add . outro-real-showroom outro --start 9 --dur 3 \
+      --track 7 --vars '{"src":"../assets/showroom/front-side-view.png","focus":"79% 50%"}'
+  Needs assets/brand/cv-logo-light.png, assets/fonts/Manrope-Regular.ttf, assets/fonts/Manrope-Bold.ttf.
+-->
+<html
+  data-composition-variables='[
+    {"id":"src","type":"string","label":"Showroom photo (required)","default":""},
+    {"id":"focus","type":"string","label":"Photo focus (object-position)","default":"50% 50%"},
+    {"id":"push","type":"number","label":"Push (0.04-0.06)","default":0.05,"min":0,"max":0.1,"step":0.005},
+    {"id":"shade","type":"number","label":"Bottom shade","default":0.65,"min":0.3,"max":0.8,"step":0.01},
+    {"id":"logoW","type":"number","label":"Logo width (px)","default":640,"min":300,"max":900},
+    {"id":"logoY","type":"number","label":"Logo centre y (px)","default":1180,"min":600,"max":1400},
+    {"id":"cta","type":"string","label":"CTA","default":"Explore more at CarVendors.co.uk"},
+    {"id":"credit","type":"string","label":"Dealer line","default":"Featured dealer: B&F Cars, Northampton"},
+    {"id":"ctaSize","type":"number","label":"CTA size (px)","default":52,"min":36,"max":64},
+    {"id":"fadeIn","type":"number","label":"Fade in (s)","default":0.2,"min":0,"max":1,"step":0.05}
+  ]'
+>
+  <head><meta charset="UTF-8" /></head>
+  <body>
+    <template>
+      <style>
+        @font-face { font-family: "Manrope"; src: url("../assets/fonts/Manrope-Regular.ttf") format("truetype"); font-weight: 400; font-style: normal; }
+        @font-face { font-family: "Manrope"; src: url("../assets/fonts/Manrope-Bold.ttf") format("truetype"); font-weight: 700; font-style: normal; }
+        #outro { position: absolute; inset: 0; pointer-events: none; background: #111311; overflow: hidden; }
+        #outro .or-card { position: absolute; inset: 0; }
+        #outro .or-ph { position: absolute; inset: 0; overflow: hidden; }
+        #outro .or-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 50%; transform-origin: 50% 45%; }
+        #outro .or-shade { position: absolute; inset: 0; }
+        #outro .or-stack { position: absolute; left: 80px; right: 80px; top: 0; display: flex; flex-direction: column; align-items: center; text-align: center; color: #fff; }
+        #outro .or-logo { display: block; width: 640px; height: auto; filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.3)); }
+        #outro .or-cta { display: block; white-space: nowrap; margin-top: 54px; font-family: "Manrope", sans-serif; font-weight: 700; font-size: 52px; line-height: 1.1; letter-spacing: -0.015em; text-shadow: 0 1px 2px rgb(0 0 0 / 0.3); }
+        #outro .or-credit { display: block; white-space: nowrap; margin-top: 18px; font-family: "Manrope", sans-serif; font-weight: 400; font-size: 32px; line-height: 1.2; color: rgb(255 255 255 / 0.9); text-shadow: 0 1px 2px rgb(0 0 0 / 0.3); }
+      </style>
+      <div id="outro" data-composition-id="outro" data-width="1080" data-height="1920">
+        <div class="or-card">
+          <div class="or-ph"><img class="or-img" alt="B&amp;F Cars showroom" data-layout-allow-overflow /></div>
+          <div class="or-shade"></div>
+          <div class="or-stack">
+            <img class="or-logo" src="../assets/brand/cv-logo-light.png" alt="CarVendors.co.uk" />
+            <div class="or-cta"></div>
+            <div class="or-credit"></div>
+          </div>
+        </div>
+      </div>
+      <script>
+        (function () {
+          const ID = "outro", D = 3.0;
+          const DEF = { src: "", focus: "50% 50%", push: 0.05, shade: 0.65, logoW: 640, logoY: 1180, cta: "Explore more at CarVendors.co.uk", credit: "Featured dealer: B&F Cars, Northampton", ctaSize: 52, fadeIn: 0.2 };
+          let v = {};
+          try { v = (window.__hyperframes && window.__hyperframes.getVariables && window.__hyperframes.getVariables()) || {}; } catch (e) {}
+          const P = Object.assign({}, DEF, v);
+          const root = document.getElementById(ID);
+          const card = root.querySelector(".or-card");
+          const img = root.querySelector(".or-img");
+          const shade = root.querySelector(".or-shade");
+          const stack = root.querySelector(".or-stack");
+          const logo = root.querySelector(".or-logo");
+          const cta = root.querySelector(".or-cta");
+          const credit = root.querySelector(".or-credit");
+          if (P.src) { img.src = P.src; } else { img.style.display = "none"; console.warn("[outro-real-showroom] src is required: pass a real showroom photo"); }
+          img.style.objectPosition = P.focus;
+          const s = Math.max(0.3, Math.min(0.8, Number(P.shade)));
+          const g = (k) => "rgb(17 19 17 / " + (s * k).toFixed(3) + ")";
+          // bottom-up charcoal: full strength under the copy (y >= ~1080), easing to clear by ~y 640
+          shade.style.background = "linear-gradient(to top, " + g(1) + " 0%, " + g(1) + " 26%, " + g(0.9) + " 38%, " + g(0.62) + " 47%, " + g(0.3) + " 56%, " + g(0.08) + " 64%, " + g(0) + " 70%)";
+          logo.style.width = P.logoW + "px";
+          cta.textContent = P.cta;
+          cta.style.fontSize = P.ctaSize + "px";
+          credit.textContent = P.credit;
+          if (!String(P.credit || "").trim()) credit.style.display = "none";
+
+          function build() {
+            const logoH = logo.offsetHeight || (P.logoW * 353) / 2400;
+            stack.style.top = P.logoY - logoH / 2 + "px";
+            const tl = gsap.timeline({ paused: true });
+            if (P.fadeIn > 0) tl.fromTo(card, { opacity: 0 }, { opacity: 1, duration: Number(P.fadeIn), ease: "power1.out" }, 0);
+            if (P.src) tl.fromTo(img, { scale: 1 }, { scale: 1 + Number(P.push), duration: D, ease: "sine.inOut" }, 0);
+            [logo, cta, credit].forEach((el, i) => {
+              tl.fromTo(el, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.32, ease: "power3.out" }, 0.25 * (i + 1));
+            });
+            window.__timelines[ID] = tl;
+            if (window.__hfForceTimelineRebind) window.__hfForceTimelineRebind();
+          }
+          const imgs = [logo].concat(P.src ? [img] : []).map((im) => (im.complete && im.naturalWidth ? Promise.resolve() : new Promise((r) => { im.onload = im.onerror = r; })));
+          Promise.all([document.fonts.load("700 " + P.ctaSize + "px Manrope", "Explore"), document.fonts.load("400 32px Manrope", "Featured")].concat(imgs)).then(build, build);
+        })();
+      </script>
+    </template>
+  </body>
+</html>

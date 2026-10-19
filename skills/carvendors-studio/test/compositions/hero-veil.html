@@ -1,0 +1,95 @@
+<!doctype html>
+<!--
+  localized-contrast  (CarVendors standalone soft charcoal scrim for busy footage)
+
+  Purpose: a feathered charcoal (#111311) -> transparent gradient confined to one area (x, y, w, h), placed
+  under a headline or caption that sits on busy or bright footage. Never full frame, never a box: the edges
+  always fall off to fully transparent. Mount it on a LOWER track and with the same start as the text it
+  supports. (The text components also have a built-in `scrim` variable; use this one when several texts share
+  one area, when you need a linear fall-off, or when you want to time the scrim separately.)
+
+  Variables (host data-variable-values):
+    x, y      number   top-left of the scrim area px                           60, 300
+    w, h      number   size of the area px                                     820, 360
+    opacity   number   darkest point, 0.30-0.55                                0.42
+    feather   number   0.1-0.9: share of the area that falls off to clear      0.55
+    shape     enum     ellipse (soft oval) | soft-rect (feathered rectangle)    "ellipse"
+               | fade-up / fade-down / fade-left / fade-right (linear: dark at the named edge's opposite side,
+                 e.g. fade-up = dark at the bottom, clear at the top; sides feathered)
+    delay     number   fade-in start, s after host start                        0
+    exit      boolean  fade out at the end of the slot                          true
+
+  Timing: fade in 200 ms power1.out at delay; exit 180 ms fade ending 20 ms before the slot end.
+
+  Mount (under a headline on track 3):
+    python3 ~/.claude/skills/carvendors-studio/tools/mount.py add . localized-contrast scrim-1 --start 2.8 \
+      --dur 2 --track 2 --vars '{"x":40,"y":280,"w":760,"h":360,"opacity":0.4}'
+-->
+<html
+  data-composition-variables='[
+    {"id":"x","type":"number","label":"Left (px)","default":60,"min":-400,"max":1080},
+    {"id":"y","type":"number","label":"Top (px)","default":300,"min":-400,"max":1920},
+    {"id":"w","type":"number","label":"Width (px)","default":820,"min":40,"max":1600},
+    {"id":"h","type":"number","label":"Height (px)","default":360,"min":40,"max":1920},
+    {"id":"opacity","type":"number","label":"Opacity","default":0.42,"min":0,"max":0.55,"step":0.01},
+    {"id":"feather","type":"number","label":"Feather (0.1-0.9)","default":0.55,"min":0.1,"max":0.9,"step":0.05},
+    {"id":"shape","type":"enum","label":"Shape","default":"ellipse","options":[{"value":"ellipse","label":"Ellipse"},{"value":"soft-rect","label":"Soft rectangle"},{"value":"fade-up","label":"Linear, dark bottom"},{"value":"fade-down","label":"Linear, dark top"},{"value":"fade-left","label":"Linear, dark right"},{"value":"fade-right","label":"Linear, dark left"}]},
+    {"id":"delay","type":"number","label":"Fade-in delay (s)","default":0,"min":0,"max":5,"step":0.05},
+    {"id":"exit","type":"boolean","label":"Exit at end","default":true}
+  ]'
+>
+  <head><meta charset="UTF-8" /></head>
+  <body>
+    <template>
+      <style>
+        #hero-veil { position: absolute; inset: 0; pointer-events: none; }
+        #hero-veil .lc { position: absolute; left: 60px; top: 300px; width: 820px; height: 360px; opacity: 0; }
+      </style>
+      <div id="hero-veil" data-composition-id="hero-veil" data-width="1080" data-height="1920">
+        <div class="lc"></div>
+      </div>
+      <script>
+        (function () {
+          const ID = "hero-veil", D = 2.8;
+          const DEF = { x: 60, y: 300, w: 820, h: 360, opacity: 0.42, feather: 0.55, shape: "ellipse", delay: 0, exit: true };
+          let v = {};
+          try { v = (window.__hyperframes && window.__hyperframes.getVariables && window.__hyperframes.getVariables()) || {}; } catch (e) {}
+          const P = Object.assign({}, DEF, v);
+          const el = document.getElementById(ID).querySelector(".lc");
+          const a = Math.max(0, Math.min(0.55, Number(P.opacity) || 0));
+          const f = Math.max(0.1, Math.min(0.9, Number(P.feather) || 0.55));
+          const c = (k) => "rgb(17 19 17 / " + (a * k).toFixed(3) + ")";
+          // eased fall-off (no hard ring): solid core, then smooth steps to clear
+          const fall = (start) => {
+            const s = start * 100, r = 100 - s;
+            return c(1) + " 0%, " + c(1) + " " + s.toFixed(1) + "%, " + c(0.8) + " " + (s + r * 0.25).toFixed(1) + "%, " +
+              c(0.5) + " " + (s + r * 0.5).toFixed(1) + "%, " + c(0.2) + " " + (s + r * 0.75).toFixed(1) + "%, " + c(0) + " 100%";
+          };
+          Object.assign(el.style, { left: P.x + "px", top: P.y + "px", width: P.w + "px", height: P.h + "px" });
+          const edge = (dir, pct) => "linear-gradient(" + dir + ", transparent 0%, #000 " + pct + "%, #000 " + (100 - pct) + "%, transparent 100%)";
+          if (P.shape === "ellipse") {
+            el.style.background = "radial-gradient(closest-side, " + fall(1 - f) + ")";
+          } else {
+            const fp = (f * 50).toFixed(1);
+            const lin = { "fade-up": "to top", "fade-down": "to bottom", "fade-left": "to left", "fade-right": "to right" }[P.shape];
+            if (lin) {
+              // dark at the start side, clear at the far side; the two other edges are feathered
+              el.style.background = "linear-gradient(" + lin + ", " + fall(Math.max(0, 1 - f * 1.4)) + ")";
+              const across = lin === "to top" || lin === "to bottom" ? "to right" : "to bottom";
+              el.style.webkitMaskImage = el.style.maskImage = edge(across, Math.min(45, f * 40).toFixed(1));
+            } else {
+              el.style.background = c(1);
+              el.style.webkitMaskImage = el.style.maskImage = edge("to right", fp) + ", " + edge("to bottom", fp);
+              el.style.webkitMaskComposite = "source-in";
+              el.style.maskComposite = "intersect";
+            }
+          }
+          const tl = gsap.timeline({ paused: true });
+          tl.fromTo(el, { opacity: 0 }, { opacity: 1, duration: 0.2, ease: "power1.out" }, Number(P.delay));
+          if (P.exit) tl.to(el, { opacity: 0, duration: 0.18, ease: "power1.in" }, Math.max(Number(P.delay) + 0.3, D - 0.2));
+          window.__timelines[ID] = tl;
+        })();
+      </script>
+    </template>
+  </body>
+</html>

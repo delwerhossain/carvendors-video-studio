@@ -1,0 +1,141 @@
+<!doctype html>
+<!--
+  logo-top  (CarVendors brand mark + featured-dealer credit, top of frame)
+
+  Purpose: the authentic CarVendors mark (real cv-icon-light.png + cv-wordmark-light.png artwork, never
+  re-typed) with a small "Featured dealer: B&F Cars" line under the wordmark (label Manrope 400, dealer
+  name Manrope 700, white 90%). Legibility over bright sky comes from a very subtle localized scrim
+  (feathered charcoal, no edges) and a tight 1-2 px shadow, never a box or chip. Fades in once and stays.
+
+  Variables (host data-variable-values):
+    position  enum     top-left (x,y = top-left corner) | top-center (centred on x)     "top-left"
+    x         number   left edge (top-left) or centre (top-center) px                   80
+    y         number   top px (keep it clear of the platform top bar, 110-200)          120
+    width     number   lockup width px (icon + gap + wordmark)                          380
+    label     string   credit label ("" hides the whole credit line)                    "Featured dealer:"
+    dealer    string   dealer name (bold)                                               "B&F Cars"
+    lineSize  number   credit line font px (26-30)                                      27
+    scrim     number   0-0.45 soft charcoal behind the lockup; raise to 0.38-0.45 on    0.32
+                       overcast/white sky (the credit line is small text, needs 4.5:1)
+    delay     number   fade-in start, s after host start                                0.1
+    exit      boolean  fade out at the end of the slot                                  false
+
+  Timing: 300 ms opacity + 8 px settle (power3.out); credit line +60 ms. No exit by default: give the host
+  the whole span it should stay for (e.g. every shot before the outro).
+
+  Mount:
+    python3 ~/.claude/skills/carvendors-studio/tools/mount.py add . logo-top logo --start 0 --dur 9 --track 8
+  Needs assets/brand/cv-icon-light.png, assets/brand/cv-wordmark-light.png, assets/fonts/Manrope-Regular.ttf,
+  assets/fonts/Manrope-Bold.ttf.
+-->
+<html
+  data-composition-variables='[
+    {"id":"position","type":"enum","label":"Position","default":"top-left","options":[{"value":"top-left","label":"Top left"},{"value":"top-center","label":"Top centre"}]},
+    {"id":"x","type":"number","label":"x (px)","default":80,"min":0,"max":1080},
+    {"id":"y","type":"number","label":"Top (px)","default":120,"min":0,"max":1900},
+    {"id":"width","type":"number","label":"Lockup width (px)","default":380,"min":200,"max":700},
+    {"id":"label","type":"string","label":"Credit label","default":"Featured dealer:"},
+    {"id":"dealer","type":"string","label":"Dealer","default":"B&F Cars"},
+    {"id":"lineSize","type":"number","label":"Credit size (px)","default":27,"min":20,"max":36},
+    {"id":"scrim","type":"number","label":"Scrim (0-0.45)","default":0.32,"min":0,"max":0.45,"step":0.01},
+    {"id":"delay","type":"number","label":"Fade-in delay (s)","default":0.1,"min":0,"max":5,"step":0.05},
+    {"id":"exit","type":"boolean","label":"Exit at end","default":false}
+  ]'
+>
+  <head><meta charset="UTF-8" /></head>
+  <body>
+    <template>
+      <style>
+        @font-face { font-family: "Manrope"; src: url("../assets/fonts/Manrope-Regular.ttf") format("truetype"); font-weight: 400; font-style: normal; }
+        @font-face { font-family: "Manrope"; src: url("../assets/fonts/Manrope-Bold.ttf") format("truetype"); font-weight: 700; font-style: normal; }
+        #__ID__ { position: absolute; inset: 0; pointer-events: none; }
+        #__ID__ .cv-scrim { position: absolute; left: calc(-21% - 70px); right: calc(-21% - 70px); top: calc(-21% - 70px); bottom: calc(-21% - 70px); opacity: 0; pointer-events: none; }
+        #__ID__ .lt-box { position: absolute; left: 80px; top: 120px; display: flex; align-items: center; }
+        #__ID__ .lt-art { position: relative; display: flex; align-items: center; filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.28)); }
+        #__ID__ .lt-icon { display: block; height: auto; }
+        #__ID__ .lt-col { position: relative; display: flex; flex-direction: column; align-items: flex-start; }
+        #__ID__ .lt-wm { display: block; height: auto; }
+        #__ID__ .lt-line {
+          display: block; white-space: nowrap; font-family: "Manrope", sans-serif; font-size: 27px; line-height: 1;
+          letter-spacing: 0.005em; color: rgb(255 255 255 / 0.9); text-shadow: 0 1px 2px rgb(0 0 0 / 0.35);
+        }
+        #__ID__ .lt-line .lt-l { font-weight: 400; }
+        #__ID__ .lt-line .lt-d { font-weight: 700; }
+      </style>
+      <div id="__ID__" data-composition-id="__ID__" data-width="1080" data-height="1920">
+        <div class="lt-box"><div class="cv-scrim" data-layout-allow-overflow></div>
+          <div class="lt-art">
+            <img class="lt-icon" src="../assets/brand/cv-icon-light.png" alt="" />
+          </div>
+          <div class="lt-col">
+            <div class="lt-art"><img class="lt-wm" src="../assets/brand/cv-wordmark-light.png" alt="CarVendors.co.uk" /></div>
+            <div class="lt-line"><span class="lt-l"></span> <span class="lt-d"></span></div>
+          </div>
+        </div>
+      </div>
+      <script>
+        (function () {
+          const ID = "__ID__", D = __DUR__;
+          const DEF = { position: "top-left", x: 80, y: 120, width: 380, label: "Featured dealer:", dealer: "B&F Cars", lineSize: 27, scrim: 0.32, delay: 0.1, exit: false };
+          let v = {};
+          try { v = (window.__hyperframes && window.__hyperframes.getVariables && window.__hyperframes.getVariables()) || {}; } catch (e) {}
+          const P = Object.assign({}, DEF, v);
+          const root = document.getElementById(ID);
+          const box = root.querySelector(".lt-box");
+          const icon = root.querySelector(".lt-icon");
+          const col = root.querySelector(".lt-col");
+          const wm = root.querySelector(".lt-wm");
+          const line = root.querySelector(".lt-line");
+          const scrim = root.querySelector(".cv-scrim");
+          root.querySelector(".lt-l").textContent = String(P.label || "");
+          root.querySelector(".lt-d").textContent = String(P.dealer || "");
+          const hasLine = !!String(P.label || "").trim();
+          if (!hasLine) line.style.display = "none";
+
+          // proportions: icon height ~ wordmark + credit line; wordmark art is 1960x174
+          const W = Number(P.width);
+          const iconH = Math.round(W * 0.19), gap = Math.round(W * 0.04);
+          const wmW = W - iconH - gap, wmH = (wmW * 174) / 1960;
+          icon.style.width = icon.style.height = iconH + "px";
+          wm.style.width = wmW + "px";
+          col.style.marginLeft = gap + "px";
+          line.style.fontSize = P.lineSize + "px";
+          line.style.marginTop = Math.round(wmH * 0.42) + "px";
+          if (!hasLine) icon.style.width = icon.style.height = Math.round(wmH * 1.9) + "px";
+          // optical: the credit text starts at the wordmark's "C" ink edge (wordmark art has ~0.6% left padding)
+          line.style.marginLeft = Math.round(wmW * 0.006) + "px";
+
+          // scrim = first child of the text box, sized in % of the box (no layout measuring: clips that start
+          // later are display:none at build time, so box sizes read 0)
+          function placeScrim(a) {
+            if (!(a > 0)) { scrim.style.display = "none"; return; }
+            const c = (k) => "rgb(17 19 17 / " + (a * k).toFixed(3) + ")";
+            scrim.style.background = "radial-gradient(closest-side, " + c(1) + " 0%, " + c(1) + " 46%, " + c(0.8) + " 61%, " + c(0.46) + " 75%, " + c(0.16) + " 88%, " + c(0) + " 100%)";
+          }
+          function build() {
+            box.style.left = P.x + "px";
+            gsap.set(box, { xPercent: P.position === "top-center" ? -50 : 0 });
+            box.style.top = P.y + "px";
+            placeScrim(Math.min(0.45, Number(P.scrim) || 0));
+            const tl = gsap.timeline({ paused: true });
+            const t0 = Number(P.delay);
+            if (P.scrim > 0) tl.fromTo(scrim, { opacity: 0 }, { opacity: 1, duration: 0.3, ease: "power1.out" }, t0);
+            tl.fromTo(box, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.3, ease: "power3.out" }, t0);
+            if (hasLine) tl.fromTo(line, { opacity: 0 }, { opacity: 1, duration: 0.3, ease: "power1.out" }, t0 + 0.06);
+            if (P.exit) {
+              const te = Math.max(t0 + 0.5, D - 0.22);
+              tl.to(box, { opacity: 0, duration: 0.2, ease: "power1.in" }, te);
+            }
+            window.__timelines[ID] = tl;
+            if (window.__hfForceTimelineRebind) window.__hfForceTimelineRebind();
+          }
+          const imgs = [icon, wm].map((im) => (im.complete ? Promise.resolve() : new Promise((r) => { im.onload = im.onerror = r; })));
+          Promise.all([
+            document.fonts.load("400 " + P.lineSize + "px Manrope", "Featured"),
+            document.fonts.load("700 " + P.lineSize + "px Manrope", "B&F"),
+          ].concat(imgs)).then(build, build);
+        })();
+      </script>
+    </template>
+  </body>
+</html>

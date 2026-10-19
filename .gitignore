@@ -1,0 +1,17 @@
+# media and build output never go in the repo
+*.mp4
+*.mov
+*.wav
+*.mp3
+*.m4a
+renders/
+snaps*/
+.hyperframes/
+node_modules/
+__pycache__/
+.DS_Store
+# secrets / per-computer files
+.env
+.env.*
+*.env
+paths.json

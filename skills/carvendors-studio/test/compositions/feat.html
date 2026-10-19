@@ -1,0 +1,138 @@
+<!doctype html>
+<!--
+  verified-feature  (CarVendors: at most two short, VERIFIED or visibly true feature lines)
+
+  Purpose: "Sporty styling" / "Compact design" style lines for a feature shot. Manrope 700 white, each row
+  with a small white tick in a thin 2 px circle (or no icon). Only verified or plainly visible claims; never
+  auto-insert engine, insurance, economy, finance or price claims. Optional micro dark backing per row
+  (charcoal 45 %, radius 12) only when the footage behind is busy; otherwise use `scrim` or nothing.
+
+  Variables (host data-variable-values):
+    items    string   1-2 lines separated by "|" (extra lines are dropped)       "Sporty styling|Compact design"
+    x        number   anchor x px (left edge / centre / right edge by align)     80
+    y        number   top of the block px                                        380
+    align    enum     left | center | right                                      "left"
+    size     number   font px (44-50)                                            46
+    icon     enum     tick | none                                                "tick"
+    backing  boolean  micro charcoal backing behind each row                     false
+    scrim    number   0-0.55 localized charcoal gradient behind the block        0
+    delay    number   entrance start, s after host start                         0.12
+    stagger  number   seconds between rows                                       0.09
+    exit     boolean  fade out at the end of the slot                            true
+
+  Timing: each row 260 ms opacity + 12 px rise (power3.out), rows 90 ms apart; the tick stroke draws
+  200 ms from +80 ms. Exit 180 ms (opacity + 8 px lift, power2.in) ending 20 ms before the slot end.
+
+  Mount:
+    python3 ~/.claude/skills/carvendors-studio/tools/mount.py add . verified-feature feat --start 7.4 --dur 1.6 \
+      --vars '{"items":"Sporty styling|Compact design","x":80,"y":360,"scrim":0.3}'
+  Needs assets/fonts/Manrope-Bold.ttf.
+-->
+<html
+  data-composition-variables='[
+    {"id":"items","type":"string","label":"Lines (A|B)","default":"Sporty styling|Compact design"},
+    {"id":"x","type":"number","label":"Anchor x (px)","default":80,"min":0,"max":1080},
+    {"id":"y","type":"number","label":"Top (px)","default":380,"min":0,"max":1900},
+    {"id":"align","type":"enum","label":"Align","default":"left","options":[{"value":"left","label":"Left"},{"value":"center","label":"Centre"},{"value":"right","label":"Right"}]},
+    {"id":"size","type":"number","label":"Size (px)","default":46,"min":32,"max":64},
+    {"id":"icon","type":"enum","label":"Icon","default":"tick","options":[{"value":"tick","label":"Tick in circle"},{"value":"none","label":"None"}]},
+    {"id":"backing","type":"boolean","label":"Micro backing","default":false},
+    {"id":"scrim","type":"number","label":"Scrim (0-0.55)","default":0,"min":0,"max":0.55,"step":0.01},
+    {"id":"delay","type":"number","label":"Entrance delay (s)","default":0.12,"min":0,"max":5,"step":0.05},
+    {"id":"stagger","type":"number","label":"Row stagger (s)","default":0.09,"min":0,"max":1,"step":0.01},
+    {"id":"exit","type":"boolean","label":"Exit at end","default":true}
+  ]'
+>
+  <head><meta charset="UTF-8" /></head>
+  <body>
+    <template>
+      <style>
+        @font-face { font-family: "Manrope"; src: url("../assets/fonts/Manrope-Bold.ttf") format("truetype"); font-weight: 700; font-style: normal; }
+        #feat { position: absolute; inset: 0; pointer-events: none; }
+        #feat .cv-scrim { position: absolute; left: calc(-21% - 90px); right: calc(-21% - 90px); top: calc(-21% - 90px); bottom: calc(-21% - 90px); opacity: 0; pointer-events: none; }
+        #feat .vf-box {
+          position: absolute; left: 80px; top: 380px; display: flex; flex-direction: column; align-items: flex-start; gap: 0.3em;
+          font-family: "Manrope", sans-serif; font-weight: 700; font-size: 46px; line-height: 1.1; letter-spacing: -0.012em; color: #fff;
+        }
+        #feat .vf-row { position: relative; display: flex; align-items: center; gap: 0.36em; white-space: nowrap; }
+        #feat .vf-row.has-back { padding: 0.2em 0.42em 0.22em 0.32em; border-radius: 12px; background: rgb(17 19 17 / 0.45); }
+        #feat .vf-row.has-back.no-icon { padding-left: 0.42em; }
+        #feat .vf-txt { display: block; text-shadow: 0 1px 2px rgb(0 0 0 / 0.24); }
+        #feat .vf-ico { display: block; flex: none; width: 0.8em; height: 0.8em; overflow: visible; filter: drop-shadow(0 1px 1.5px rgb(0 0 0 / 0.25)); }
+      </style>
+      <div id="feat" data-composition-id="feat" data-width="1080" data-height="1920">
+        <div class="vf-box"><div class="cv-scrim" data-layout-allow-overflow></div></div>
+      </div>
+      <script>
+        (function () {
+          const ID = "feat", D = 1.6;
+          const DEF = { items: "Sporty styling|Compact design", x: 80, y: 380, align: "left", size: 46, icon: "tick", backing: false, scrim: 0, delay: 0.12, stagger: 0.09, exit: true };
+          let v = {};
+          try { v = (window.__hyperframes && window.__hyperframes.getVariables && window.__hyperframes.getVariables()) || {}; } catch (e) {}
+          const P = Object.assign({}, DEF, v);
+          const root = document.getElementById(ID);
+          const box = root.querySelector(".vf-box");
+          const scrim = root.querySelector(".cv-scrim");
+          const al = ["left", "center", "right"].includes(P.align) ? P.align : "left";
+          box.style.alignItems = { left: "flex-start", center: "center", right: "flex-end" }[al];
+          box.style.fontSize = P.size + "px";
+          const NS = "http://www.w3.org/2000/svg";
+          const items = String(P.items || "").split("|").map((s) => s.trim()).filter(Boolean).slice(0, 2);
+          const rows = items.map((text) => {
+            const row = document.createElement("div");
+            row.className = "vf-row" + (P.backing ? " has-back" : "") + (P.icon === "none" ? " no-icon" : "");
+            let tick = null;
+            if (P.icon !== "none") {
+              // 40-unit viewBox; at 46 px font the icon is ~37 px, so stroke 2.2 units ~ 2 px on screen
+              const svg = document.createElementNS(NS, "svg");
+              svg.setAttribute("viewBox", "0 0 40 40");
+              svg.setAttribute("class", "vf-ico");
+              const ring = document.createElementNS(NS, "circle");
+              Object.entries({ cx: 20, cy: 20, r: 18.4, fill: "none", stroke: "#fff", "stroke-width": 2.2 }).forEach(([k, val]) => ring.setAttribute(k, val));
+              tick = document.createElementNS(NS, "path");
+              Object.entries({ d: "M12.2 20.6 L17.6 25.8 L28 14.6", fill: "none", stroke: "#fff", "stroke-width": 2.8, "stroke-linecap": "round", "stroke-linejoin": "round", pathLength: 1, "stroke-dasharray": 1 }).forEach(([k, val]) => tick.setAttribute(k, val));
+              svg.appendChild(ring);
+              svg.appendChild(tick);
+              row.appendChild(svg);
+            }
+            const t = document.createElement("span");
+            t.className = "vf-txt";
+            t.textContent = text;
+            row.appendChild(t);
+            box.appendChild(row);
+            return { row, tick };
+          });
+
+          // scrim = first child of the text box, sized in % of the box (no layout measuring: clips that start
+          // later are display:none at build time, so box sizes read 0)
+          function placeScrim(a) {
+            if (!(a > 0)) { scrim.style.display = "none"; return; }
+            const c = (k) => "rgb(17 19 17 / " + (a * k).toFixed(3) + ")";
+            scrim.style.background = "radial-gradient(closest-side, " + c(1) + " 0%, " + c(1) + " 40%, " + c(0.8) + " 58%, " + c(0.46) + " 74%, " + c(0.16) + " 88%, " + c(0) + " 100%)";
+          }
+          function build() {
+            box.style.left = P.x + "px";
+            gsap.set(box, { xPercent: al === "left" ? 0 : al === "right" ? -100 : -50 });
+            box.style.top = P.y + "px";
+            placeScrim(Math.min(0.55, Number(P.scrim) || 0));
+            const tl = gsap.timeline({ paused: true });
+            const t0 = Number(P.delay), st = Number(P.stagger);
+            if (P.scrim > 0) tl.fromTo(scrim, { opacity: 0 }, { opacity: 1, duration: 0.2, ease: "power1.out" }, t0);
+            rows.forEach(({ row, tick }, i) => {
+              const ts = t0 + i * st;
+              tl.fromTo(row, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.26, ease: "power3.out" }, ts);
+              if (tick) tl.fromTo(tick, { attr: { "stroke-dashoffset": 1 } }, { attr: { "stroke-dashoffset": 0 }, duration: 0.2, ease: "power2.out" }, ts + 0.08);
+            });
+            if (P.exit) {
+              const te = Math.max(t0 + 0.8, D - 0.2);
+              tl.to(box, { opacity: 0, y: -8, duration: 0.18, ease: "power2.in" }, te);
+            }
+            window.__timelines[ID] = tl;
+            if (window.__hfForceTimelineRebind) window.__hfForceTimelineRebind();
+          }
+          document.fonts.load("700 " + P.size + "px Manrope", items.join(" ") || "A").then(build, build);
+        })();
+      </script>
+    </template>
+  </body>
+</html>

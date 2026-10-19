@@ -1,0 +1,106 @@
+<!doctype html>
+<!--
+  punch-text  (reference style: "Iconic Abarth / [Style]", "Perfect for / [City Driving]", "Sporty / [Interior]")
+
+  Purpose: the premium social look from the 2026-10-19 references — a heavy white line (Montserrat Black /
+  ExtraBold) and one keyword on a bright rounded pill, the whole group tilted a few degrees, with a soft drop
+  shadow so it reads on any footage without a scrim. Use it for the 1-3 key beats of a video, not every shot.
+  Real fonts only: Montserrat Black / BlackItalic files ship in assets/fonts.
+
+  Variables (host data-variable-values):
+    line1     string   white line above the pill ("" = pill only)                 "Iconic Abarth"
+    word      string   keyword on the pill                                       "Style"
+    x, y      number   anchor (left / centre / right edge per align), top px      80, 420
+    align     enum     left | center | right                                     "left"
+    size      number   line1 px (pill text is 1.15x)                             78
+    italic    boolean  use the real Black Italic face                            false
+    tilt      number   group rotation deg (-6..0)                                -4
+    pill      color    pill colour (derive from the car; bright brand red by default)  "#E8202A"
+    pillText  color    pill text colour                                          "#FFFFFF"
+    lineBg    number   charcoal backing behind line 1 (0 = none, like the references on blue sky;
+                       0.45-0.6 on white cloud / bright walls so it passes contrast)   0
+    shadow    number   drop-shadow strength 0-0.6                                0.35
+    delay     number   entrance start s                                          0.1
+    exit      boolean  fade out at the end of the slot                           true
+
+  Timing: line1 rises from a mask (300 ms, expo.out); the pill scales in from the left (scaleX 0→1, 260 ms,
+  +90 ms) with a tiny 2° settle; the keyword slides 14 px (200 ms). Exit 180 ms.
+    python3 ~/.claude/skills/carvendors-studio/tools/mount.py add . punch-text p1 --start 4 --dur 2.8 --track 7 \
+      --vars '{"line1":"Perfect for","word":"City Driving","x":80,"y":420}'
+-->
+<html
+  data-composition-variables='[
+    {"id":"line1","type":"string","label":"Line 1","default":"Iconic Abarth"},
+    {"id":"word","type":"string","label":"Pill word","default":"Style"},
+    {"id":"x","type":"number","label":"x","default":80,"min":0,"max":1080},
+    {"id":"y","type":"number","label":"y","default":420,"min":0,"max":1920},
+    {"id":"align","type":"enum","label":"Align","default":"left","options":[{"value":"left","label":"Left"},{"value":"center","label":"Centre"},{"value":"right","label":"Right"}]},
+    {"id":"size","type":"number","label":"Size","default":78,"min":40,"max":140},
+    {"id":"italic","type":"boolean","label":"Italic","default":false},
+    {"id":"tilt","type":"number","label":"Tilt (deg)","default":-4,"min":-8,"max":4,"step":0.5},
+    {"id":"pill","type":"color","label":"Pill colour","default":"#E8202A"},
+    {"id":"pillText","type":"color","label":"Pill text","default":"#FFFFFF"},
+    {"id":"lineBg","type":"number","label":"Line 1 backing (0-0.7)","default":0,"min":0,"max":0.7,"step":0.05},
+    {"id":"shadow","type":"number","label":"Shadow","default":0.35,"min":0,"max":0.6,"step":0.05},
+    {"id":"delay","type":"number","label":"Delay","default":0.1,"min":0,"max":5,"step":0.05},
+    {"id":"exit","type":"boolean","label":"Exit","default":true}
+  ]'
+>
+  <head><meta charset="UTF-8" /></head>
+  <body>
+    <template>
+      <style>
+        @font-face { font-family: "Montserrat"; src: url("../assets/fonts/Montserrat-Black.ttf") format("truetype"); font-weight: 900; font-style: normal; }
+        @font-face { font-family: "Montserrat"; src: url("../assets/fonts/Montserrat-BlackItalic.ttf") format("truetype"); font-weight: 900; font-style: italic; }
+        @font-face { font-family: "Montserrat"; src: url("../assets/fonts/Montserrat-ExtraBold.ttf") format("truetype"); font-weight: 800; font-style: normal; }
+        #__ID__ { position: absolute; inset: 0; pointer-events: none; }
+        #__ID__ .pt { position: absolute; display: flex; flex-direction: column; font-family: "Montserrat", sans-serif; }
+        #__ID__ .pt-m { overflow: hidden; padding: 0 0.08em 0.06em; margin: 0 -0.08em -0.06em; }
+        #__ID__ .pt-l { font-weight: 900; color: #fff; line-height: 1.02; letter-spacing: -0.015em; white-space: nowrap; }
+        #__ID__ .pt-p { display: inline-flex; align-self: flex-start; margin-top: 0.12em; border-radius: 0.22em;
+          padding: 0.06em 0.34em 0.1em; transform-origin: 0 50%; }
+        #__ID__ .pt-w { font-weight: 900; line-height: 1.05; letter-spacing: -0.01em; white-space: nowrap; }
+      </style>
+      <div id="__ID__" data-composition-id="__ID__" data-width="1080" data-height="1920">
+        <div class="pt"><div class="pt-m"><div class="pt-l"></div></div><div class="pt-p"><div class="pt-w"></div></div></div>
+      </div>
+      <script>
+        (function () {
+          const ID = "__ID__", D = __DUR__;
+          const DEF = { line1: "Iconic Abarth", word: "Style", x: 80, y: 420, align: "left", size: 78, italic: false, tilt: -4, pill: "#E8202A", pillText: "#FFFFFF", shadow: 0.35, lineBg: 0, delay: 0.1, exit: true };
+          let v = {};
+          try { v = (window.__hyperframes && window.__hyperframes.getVariables && window.__hyperframes.getVariables()) || {}; } catch (e) {}
+          const P = Object.assign({}, DEF, v);
+          const root = document.getElementById(ID);
+          const g = root.querySelector(".pt"), m = root.querySelector(".pt-m"), l = root.querySelector(".pt-l");
+          const p = root.querySelector(".pt-p"), w = root.querySelector(".pt-w");
+          const st = P.italic ? "italic" : "normal";
+          l.textContent = String(P.line1 || ""); w.textContent = String(P.word || "");
+          if (!P.line1) m.remove();
+          l.style.fontSize = P.size + "px"; l.style.fontStyle = st;
+          w.style.fontSize = Math.round(P.size * 1.15) + "px"; w.style.fontStyle = st;
+          p.style.background = P.pill; w.style.color = P.pillText;
+          const sh = Number(P.shadow);
+          l.style.textShadow = "0 3px 14px rgb(0 0 0 / " + sh + "), 0 1px 2px rgb(0 0 0 / " + (sh * 0.8).toFixed(2) + ")";
+          if (Number(P.lineBg) > 0) Object.assign(l.style, { background: 'rgb(17 19 17 / ' + P.lineBg + ')', padding: '0.04em 0.28em 0.1em', borderRadius: '0.2em', display: 'inline-block' });
+          p.style.boxShadow = "0 8px 22px rgb(0 0 0 / " + sh + ")";
+          if (P.align === "center") { g.style.alignItems = "center"; p.style.alignSelf = "center"; }
+          if (P.align === "right") { g.style.alignItems = "flex-end"; p.style.alignSelf = "flex-end"; p.style.transformOrigin = "100% 50%"; }
+          g.style.left = P.x + "px"; g.style.top = P.y + "px";
+          gsap.set(g, { xPercent: P.align === "center" ? -50 : P.align === "right" ? -100 : 0, rotation: Number(P.tilt), transformOrigin: "0% 50%" });
+          function build() {
+            const tl = gsap.timeline({ paused: true }), t0 = Number(P.delay);
+            if (m.isConnected) tl.fromTo(l, { yPercent: 115 }, { yPercent: 0, duration: 0.3, ease: "expo.out" }, t0);
+            const tp = t0 + (m.isConnected ? 0.09 : 0);
+            tl.fromTo(p, { scaleX: 0, rotation: 2 }, { scaleX: 1, rotation: 0, duration: 0.26, ease: "expo.out" }, tp);
+            tl.fromTo(w, { x: -14, opacity: 0 }, { x: 0, opacity: 1, duration: 0.2, ease: "power3.out" }, tp + 0.08);
+            if (P.exit) tl.to(g, { opacity: 0, duration: 0.18, ease: "power1.in" }, Math.max(tp + 0.6, D - 0.2));
+            window.__timelines[ID] = tl;
+            if (window.__hfForceTimelineRebind) window.__hfForceTimelineRebind();
+          }
+          Promise.all([document.fonts.load((P.italic ? "italic " : "") + "900 " + P.size + "px Montserrat", "A")]).then(build, build);
+        })();
+      </script>
+    </template>
+  </body>
+</html>

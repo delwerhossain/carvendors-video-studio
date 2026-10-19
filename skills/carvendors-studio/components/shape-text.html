@@ -1,0 +1,156 @@
+<!doctype html>
+<!--
+  shape-text  (CarVendors MODE B split emphasis: white line + one keyword on a small accent pill)
+
+  Purpose: "Made to" / [stand out]. White first line (Manrope 700) and one short keyword in white on a
+  rounded, near-flat accent pill (car-derived colour, used rarely). Optional slight negative tilt.
+  The pill is drawn as its own layer so it can wipe on from the left before the word slides in.
+  Optional localized charcoal scrim behind the text only.
+
+  Variables (host data-variable-values):
+    line1     string   white lead line ("" = keyword only)                     "Made to"
+    word      string   keyword on the pill (1-2 short words)                   "stand out"
+    x         number   anchor x px (left edge / centre / right edge by align)  80
+    y         number   top of the block px                                     380
+    align     enum     left | center | right                                   "left"
+    size      number   lead line font px (~64)                                 64
+    wordSize  number   keyword font px (0 = same as size)                      0
+    accent    color    pill colour (muted, car-derived)                        "#B8323A"
+    tilt      number   pill tilt deg (-4..0)                                   0
+    radius    number   pill corner radius px                                   14
+    scrim     number   0-0.55 localized charcoal gradient behind the text      0
+    delay     number   entrance start, s after host start                      0.12
+    exit      boolean  fade out at the end of the slot                         true
+
+  Timing: lead line 280 ms opacity + 14 px rise (power3.out); pill +120 ms wipes left->right (scaleX 0->1,
+  origin left) 260 ms expo.out; keyword slides in 12 px from the left with opacity, 160 ms power3.out, as
+  the wipe lands. Exit 180 ms (opacity + 8 px lift, power2.in) ending 20 ms before slot end.
+
+  Mount:
+    python3 ~/.claude/skills/carvendors-studio/tools/mount.py add . shape-text standout --start 4.8 --dur 2.6 \
+      --vars '{"line1":"Made to","word":"stand out","x":80,"y":380,"tilt":-3}'
+  Needs assets/fonts/Manrope-Bold.ttf.
+-->
+<html
+  data-composition-variables='[
+    {"id":"line1","type":"string","label":"Lead line","default":"Made to"},
+    {"id":"word","type":"string","label":"Keyword","default":"stand out"},
+    {"id":"x","type":"number","label":"Anchor x (px)","default":80,"min":0,"max":1080},
+    {"id":"y","type":"number","label":"Top (px)","default":380,"min":0,"max":1900},
+    {"id":"align","type":"enum","label":"Align","default":"left","options":[{"value":"left","label":"Left"},{"value":"center","label":"Centre"},{"value":"right","label":"Right"}]},
+    {"id":"size","type":"number","label":"Lead size (px)","default":64,"min":36,"max":120},
+    {"id":"wordSize","type":"number","label":"Keyword size (px, 0 = same)","default":0,"min":0,"max":140},
+    {"id":"accent","type":"color","label":"Accent","default":"#B8323A"},
+    {"id":"tilt","type":"number","label":"Tilt (deg)","default":0,"min":-4,"max":0,"step":0.5},
+    {"id":"radius","type":"number","label":"Pill radius (px)","default":14,"min":0,"max":40},
+    {"id":"scrim","type":"number","label":"Scrim (0-0.55)","default":0,"min":0,"max":0.55,"step":0.01},
+    {"id":"delay","type":"number","label":"Entrance delay (s)","default":0.12,"min":0,"max":5,"step":0.05},
+    {"id":"exit","type":"boolean","label":"Exit at end","default":true}
+  ]'
+>
+  <head><meta charset="UTF-8" /></head>
+  <body>
+    <template>
+      <style>
+        @font-face { font-family: "Manrope"; src: url("../assets/fonts/Manrope-Bold.ttf") format("truetype"); font-weight: 700; font-style: normal; }
+        #__ID__ { position: absolute; inset: 0; pointer-events: none; }
+        #__ID__ .cv-scrim { position: absolute; left: calc(-21% - 90px); right: calc(-21% - 90px); top: calc(-21% - 90px); bottom: calc(-21% - 90px); opacity: 0; pointer-events: none; }
+        #__ID__ .st-box {
+          position: absolute; left: 80px; top: 380px; display: flex; flex-direction: column; align-items: flex-start;
+          font-family: "Manrope", sans-serif; font-weight: 700; color: #fff;
+        }
+        #__ID__ .st-lead { position: relative; display: block; white-space: nowrap; font-size: 64px; line-height: 1.04; letter-spacing: -0.018em; text-shadow: 0 1px 2px rgb(0 0 0 / 0.22); }
+        #__ID__ .st-tilt { position: relative; display: block; margin-top: 0.16em; transform-origin: 0 50%; }
+        #__ID__ .st-pill { position: relative; display: block; }
+        #__ID__ .st-bg {
+          position: absolute; inset: 0; border-radius: 14px; background: #B8323A; transform-origin: 0 50%;
+          box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08), 0 1px 2px rgb(0 0 0 / 0.12);
+        }
+        #__ID__ .st-word {
+          position: relative; display: block; white-space: nowrap; font-size: 64px; line-height: 1.12;
+          letter-spacing: -0.012em; padding: 0.18em 0.42em 0.2em;
+        }
+      </style>
+      <div id="__ID__" data-composition-id="__ID__" data-width="1080" data-height="1920">
+        <div class="st-box"><div class="cv-scrim" data-layout-allow-overflow></div>
+          <div class="st-lead"></div>
+          <div class="st-tilt"><div class="st-pill"><div class="st-bg"></div><div class="st-word"></div></div></div>
+        </div>
+      </div>
+      <script>
+        (function () {
+          const ID = "__ID__", D = __DUR__;
+          const DEF = { line1: "Made to", word: "stand out", x: 80, y: 380, align: "left", size: 64, wordSize: 0, accent: "#B8323A", tilt: 0, radius: 14, scrim: 0, delay: 0.12, exit: true };
+          let v = {};
+          try { v = (window.__hyperframes && window.__hyperframes.getVariables && window.__hyperframes.getVariables()) || {}; } catch (e) {}
+          const P = Object.assign({}, DEF, v);
+          const root = document.getElementById(ID);
+          const box = root.querySelector(".st-box");
+          const lead = root.querySelector(".st-lead");
+          const tilt = root.querySelector(".st-tilt");
+          const bg = root.querySelector(".st-bg");
+          const word = root.querySelector(".st-word");
+          const scrim = root.querySelector(".cv-scrim");
+          const al = ["left", "center", "right"].includes(P.align) ? P.align : "left";
+          const ws = Number(P.wordSize) > 0 ? Number(P.wordSize) : Number(P.size);
+          box.style.alignItems = { left: "flex-start", center: "center", right: "flex-end" }[al];
+          lead.textContent = String(P.line1 || "").trim();
+          if (!lead.textContent) { lead.style.display = "none"; tilt.style.marginTop = "0"; }
+          word.textContent = String(P.word || "").trim();
+          lead.style.fontSize = P.size + "px";
+          word.style.fontSize = ws + "px";
+          bg.style.background = P.accent;
+          bg.style.borderRadius = P.radius + "px";
+          const tdeg = Math.max(-4, Math.min(0, Number(P.tilt) || 0));
+          // static tilt lives on a wrapper that GSAP never tweens (no CSS/GSAP transform conflict)
+          tilt.style.transformOrigin = { left: "0 50%", center: "50% 50%", right: "100% 50%" }[al];
+          if (tdeg) tilt.style.transform = "rotate(" + tdeg + "deg)";
+
+          const cv = document.createElement("canvas").getContext("2d");
+          function bearings(text, font) {
+            if (!text) return { l: 0, r: 0 };
+            cv.font = font;
+            const m = cv.measureText(text);
+            return { l: -m.actualBoundingBoxLeft, r: m.width - m.actualBoundingBoxRight };
+          }
+          // scrim = first child of the text box, sized in % of the box (no layout measuring: clips that start
+          // later are display:none at build time, so box sizes read 0)
+          function placeScrim(a) {
+            if (!(a > 0)) { scrim.style.display = "none"; return; }
+            const c = (k) => "rgb(17 19 17 / " + (a * k).toFixed(3) + ")";
+            scrim.style.background = "radial-gradient(closest-side, " + c(1) + " 0%, " + c(1) + " 40%, " + c(0.8) + " 58%, " + c(0.46) + " 74%, " + c(0.16) + " 88%, " + c(0) + " 100%)";
+          }
+
+          function build() {
+            // lead ink edge aligns with the pill edge (the pill is the visual column edge)
+            const b = bearings(lead.textContent, "700 " + P.size + "px Manrope");
+            const off = al === "left" ? -b.l : al === "right" ? b.r : (b.r - b.l) / 2;
+            lead.style.left = off.toFixed(1) + "px";
+            box.style.left = P.x + "px";
+            gsap.set(box, { xPercent: al === "left" ? 0 : al === "right" ? -100 : -50 });
+            box.style.top = P.y + "px";
+            placeScrim(Math.min(0.55, Number(P.scrim) || 0));
+
+            const tl = gsap.timeline({ paused: true });
+            const t0 = Number(P.delay);
+            if (P.scrim > 0) tl.fromTo(scrim, { opacity: 0 }, { opacity: 1, duration: 0.2, ease: "power1.out" }, t0);
+            let tp = t0;
+            if (lead.textContent) {
+              tl.fromTo(lead, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.28, ease: "power3.out" }, t0);
+              tp = t0 + 0.12;
+            }
+            tl.fromTo(bg, { scaleX: 0 }, { scaleX: 1, duration: 0.26, ease: "expo.out" }, tp);
+            tl.fromTo(word, { opacity: 0, x: -12 }, { opacity: 1, x: 0, duration: 0.16, ease: "power3.out" }, tp + 0.12);
+            if (P.exit) {
+              const te = Math.max(tp + 0.7, D - 0.2);
+              tl.to(box, { opacity: 0, y: -8, duration: 0.18, ease: "power2.in" }, te);
+            }
+            window.__timelines[ID] = tl;
+            if (window.__hfForceTimelineRebind) window.__hfForceTimelineRebind();
+          }
+          document.fonts.load("700 " + P.size + "px Manrope", (lead.textContent + " " + word.textContent) || "A").then(build, build);
+        })();
+      </script>
+    </template>
+  </body>
+</html>
