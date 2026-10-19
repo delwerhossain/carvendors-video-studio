@@ -1,36 +1,34 @@
-# CarVendors Video Studio
+# CarVendors Video Studio (v4)
 
-Claude Code skills and tools the CarVendors / B&F team uses to re-edit the B&F Cars TikTok videos (and make new
-ads) for CarVendors.co.uk's Reels, TikTok and YouTube Shorts — premium, human-looking, fast in bulk.
+One Claude Code skill (`skills/carvendors-studio`) that re-edits the old @bnf_cars TikTok videos into
+CarVendors.co.uk Reels / TikTok / Shorts in bulk — Mac and Windows, shared resources on Google Drive.
 
-| Folder | What |
-|---|---|
-| `skills/carvendors-studio/` | The CarVendors edit skill (v3.3): rules (`SKILL.md`), components, `tools/build.py` (fast lane), `tools/paths.py`, `tools/mount.py` |
-| `skills/video-studio/` | General video tools: `clean_master.sh` (remove old text + upscale), `tts.py` (ElevenLabs, per-video model), `music.py`, `sfx.py`, `batch_scan.py`, `doctor.sh`, British Road kit |
-| `workspace/` | `AGENTS.md`, `CLAUDE.md`, team context and business context copied to `~/Projects/videos/` |
-| `examples/job-v002.json` | A complete fast-lane job |
+Each video: **attention hook (full action) → one transition → the whole original video → outro**, fixed
+CarVendors logo badge, old TikTok text kept / covered / removed, premium text beats, music, −14 LUFS master.
+The AI fills one small `job.json` per video; Python tools do the rest.
 
-## Install (Mac, once)
-```bash
-git clone <this repo> ~/carvendors-video-studio && cd ~/carvendors-video-studio && bash install.sh
-```
-Then: put **your own** ElevenLabs key in `~/.config/video-studio/.env`, and fix any `MISSING` resource path
-(hooks, music, SFX, fonts, logo, showroom photos, the TikTok video folder) once:
-```bash
-python3 ~/.claude/skills/carvendors-studio/tools/paths.py set car_sources "/path/to/@bnf_cars-All Tiktok Video"
-```
-Paths are saved per computer; you never give them again.
+## Install
+- **Mac:** `git clone https://github.com/delwerhossain/carvendors-video-studio.git && cd carvendors-video-studio && bash install.sh`
+- **Windows (PowerShell):** `git clone …` then `powershell -ExecutionPolicy Bypass -File install.ps1`
+
+Google Drive for desktop must be running: the skill finds "My Drive" and reads the team config at
+`My Drive/Projects/CarVendors/_studio/config.json`. No paths to type.
 
 ## Update
-```bash
-cd ~/carvendors-video-studio && bash update.sh
-```
+`bash update.sh` (Mac) · `powershell -ExecutionPolicy Bypass -File update.ps1` (Windows)
 
-## Use
-Open Claude Code (Claude or GLM) in `~/Projects/videos` and ask, e.g. *"edit video 7"*. The agent writes a
-`job.json` and runs `build.py`. Each video: hook (full action) → one transition → the whole original video →
-outro, fixed logo badge, old TikTok text kept / covered / removed as needed, premium text on key beats.
+## Use (Claude Code, opened in ~/Projects/videos)
+"plan videos 1-20" → "render 1-20" → finished files in Drive `Projects/CarVendors/CarVendors Edited/`.
+See `workspace/TEAM_GUIDE.md`. Tools (run with the skill Python, see SKILL.md):
 
-## Rules that matter
-No invented facts (prices, "new arrival", sold status, specs) · real footage and real showroom photos only ·
-CarVendors is the main brand, B&F Cars is "Featured dealer" · never commit keys, media or `paths.json`.
+| Tool | Does |
+|---|---|
+| `tools/batch.py plan / render / status` | bulk loop over folders 1-200 |
+| `tools/build.py job.json [--render]` | one video: clean master, hook, full video, outro, logo, covers, text, music, check, render, export, ledger |
+| `tools/hooks.py list / stats / pick / scan` | shared hook catalog and usage counts |
+| `tools/paths.py show / set / drive` | where everything is on this PC |
+| `tools/clean.py` | upscale + light grade + inpaint old text |
+| `tools/tts.py`, `music.py`, `sfx.py` | ElevenLabs voice / music / SFX (own key) |
+| `tools/doctor.py` | health check |
+
+Never commit keys, media or per-PC config.

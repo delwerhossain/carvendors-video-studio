@@ -2,58 +2,15 @@
   "id": "v002",
   "slug": "mitsubishi-asx",
   "folder": 2,
-  "clean": {
-    "boxes": [],
-    "grade": "eq=contrast=1.05:saturation=1.07:gamma=0.98"
-  },
-  "hook": {
-    "file": "Soccer-Tire.mp4",
-    "in": 2.0,
-    "out": 5.75,
-    "volume": 0.8
-  },
-  "transition": "cut",
-  "logo": {
-    "corner": "top-left",
-    "style": "dark"
-  },
+  "ready": true,
+  "hook": "auto",
+  "remove": [],
   "covers": [
-    {
-      "at": 0,
-      "dur": "all",
-      "x": 135,
-      "y": 1305,
-      "w": 810,
-      "h": 230,
-      "text": "Dad’s next car?",
-      "style": "dark",
-      "size": 60
-    }
+    {"at": 0, "dur": "all", "x": 135, "y": 1305, "w": 810, "h": 230, "text": "Spotted at B&F Cars", "kicker": "FEATURED", "size": 54}
   ],
   "overlays": [
-    {
-      "component": "hero-model",
-      "at": 0.2,
-      "dur": 2.6,
-      "vars": {
-        "make": "MITSUBISHI",
-        "model": "ASX",
-        "x": 870,
-        "y": 300,
-        "align": "right",
-        "size": 175,
-        "scrim": 0.4
-      }
-    }
-  ],
-  "music": {
-    "file": "Royalty Free Music/NCS/Syn_Cole_-_Feel_Good_[NCS_Release].mp3",
-    "start": 42.0,
-    "volume": 0.6
-  },
-  "outro": {
-    "photo": "front-side-view.png",
-    "dur": 3.0,
-    "focus": "72% 50%"
-  }
+    {"component": "label-card", "at": 0.15, "dur": 2.7, "vars": {"title": "Mitsubishi ASX", "sub": "Compact SUV. Easy to live with.", "tag": "AT B&F CARS", "x": 80, "y": 330, "size": 80}},
+    {"component": "punch-text", "at": 3.05, "dur": 2.6, "vars": {"line1": "Step", "word": "Inside", "x": 80, "y": 360, "size": 84, "lineBg": 0.5}},
+    {"component": "punch-text", "at": 5.9, "dur": 3.1, "vars": {"line1": "Dad's next", "word": "Car?", "x": 80, "y": 380, "size": 84, "italic": true, "pill": "#1F2321", "lineBg": 0.55}}
+  ]
 }

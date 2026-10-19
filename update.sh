@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Pull the latest version and refresh the two skills (keeps your paths.json, keys and projects untouched).
+# Get the latest version of the skill (keeps your keys, Drive paths and job folders untouched).
 set -euo pipefail
 cd "$(dirname "$0")"
 git pull --ff-only
-bash install.sh --skills
+bash install.sh --skill

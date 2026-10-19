@@ -1,109 +1,126 @@
 #!/usr/bin/env python3
-"""Per-computer path setup for carvendors-studio. Run once per PC; afterwards every job reads the saved map.
+"""Where everything is, on this computer (Mac or Windows). Zero setup when Google Drive for desktop is running.
 
-  paths.py show                 print the saved map and whether each path exists (OK / MISSING)
-  paths.py detect               search this computer for the usual folders and save what it finds
-  paths.py set <key> <path>     save one path (use when detect cannot find it, or a folder moved)
-  paths.py get <key>            print one path (for scripts); exit 1 if unset or missing
+  paths.py show                 every path + OK / MISSING
+  paths.py get <key>            one absolute path (exit 1 if missing) — used by the other tools
+  paths.py set <key> <path>     local override for this computer only (a folder that lives elsewhere here)
+  paths.py drive <path>         tell this computer where "My Drive" is (only if auto-detect fails)
 
-Keys: car_sources (folder with numbered video folders 1..N), hooks, bgm, sfx, fonts, logos, showroom_pics,
-customer_reviews, projects_root (where job folders are made).
-Saved at ~/.config/carvendors-studio/paths.json (per user, per computer; never inside the shared skill).
-Detection looks for these folder names under the home folder, Google Drive / CloudStorage, Downloads,
-Documents, Desktop and Projects: "@bnf_cars-All Tiktok Video", "All Hooks", "Background Music",
-"Sound Effects", "Font", "Logo", "Showroom Pic", "Customer Review CarVendors".
+How it resolves: it finds this computer's Google Drive "My Drive" folder (Mac: ~/Library/CloudStorage/
+GoogleDrive-*/My Drive; Windows: <letter>:\\My Drive, %USERPROFILE%\\My Drive, …), then reads the team's shared
+config  <My Drive>/Projects/CarVendors/_studio/config.json  whose paths are RELATIVE to My Drive. So the whole
+team shares one config on Drive; a change there reaches every PC. Local overrides live in
+~/.config/carvendors-studio/paths.json and win over the shared config.
 """
-import json, os, sys
+import json, os, string, sys
 from pathlib import Path
 
-CFG = Path.home() / ".config" / "carvendors-studio" / "paths.json"
-KEYS = {
-    "car_sources": "@bnf_cars-All Tiktok Video",
-    "hooks": "All Hooks",
-    "bgm": "Background Music",
-    "sfx": "Sound Effects",
-    "fonts": "Font",
-    "logos": "Logo",
-    "showroom_pics": "Showroom Pic",
-    "customer_reviews": "Customer Review CarVendors",
+LOCAL = Path.home() / ".config" / "carvendors-studio" / "paths.json"
+SHARED_REL = "Projects/CarVendors/_studio/config.json"
+DEFAULT_REL = {   # used if the shared config does not exist yet
+    "carvendors": "Projects/CarVendors",
+    "car_sources": "Projects/CarVendors/@bnf_cars-All Tiktok Video",
+    "logos": "Projects/CarVendors/Logo",
+    "showroom_pics": "Projects/CarVendors/Showroom Pic",
+    "text_refs": "Projects/CarVendors/video-text-img -preveiw",
+    "studio": "Projects/CarVendors/_studio",
+    "resources": "Video Editing Component/All Resources",
+    "hooks": "Video Editing Component/All Resources/All Hooks",
+    "bgm": "Video Editing Component/All Resources/Background Music",
+    "sfx": "Video Editing Component/All Resources/Sound Effects",
+    "fonts": "Video Editing Component/All Resources/Font",
+    "outros": "Video Editing Component/All Resources/Outro",
+    "exports": "Projects/CarVendors/CarVendors Edited",
 }
-ROOTS = ["Library/CloudStorage", "Google Drive", "Downloads", "Documents", "Desktop", "Projects"]
 
 
-def load():
+def load_local():
     try:
-        return json.loads(CFG.read_text())
+        return json.loads(LOCAL.read_text(encoding="utf-8"))
     except Exception:
         return {}
 
 
-def save(d):
-    CFG.parent.mkdir(parents=True, exist_ok=True)
-    CFG.write_text(json.dumps(d, indent=2, ensure_ascii=False))
+def save_local(d):
+    LOCAL.parent.mkdir(parents=True, exist_ok=True)
+    LOCAL.write_text(json.dumps(d, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
-def find(name, max_depth=7):
-    hits = []
-    for r in ROOTS:
-        base = Path.home() / r
-        if not base.exists():
-            continue
-        for dirpath, dirnames, _ in os.walk(base):
-            depth = Path(dirpath).relative_to(base).parts
-            if len(depth) >= max_depth:
-                dirnames[:] = []
-                continue
-            dirnames[:] = [x for x in dirnames if not x.startswith(".") and x not in ("node_modules", "Library")]
-            if name in dirnames:
-                hits.append(str(Path(dirpath) / name))
-    return hits
+def my_drive():
+    loc = load_local()
+    if loc.get("my_drive") and Path(loc["my_drive"]).exists():
+        return Path(loc["my_drive"])
+    cands = []
+    home = Path.home()
+    cs = home / "Library" / "CloudStorage"
+    if cs.exists():
+        cands += [p / "My Drive" for p in sorted(cs.glob("GoogleDrive-*"))]
+    cands += [home / "My Drive", home / "Google Drive" / "My Drive", home / "Google Drive"]
+    if os.name == "nt":
+        cands += [Path(f"{c}:\\") / "My Drive" for c in string.ascii_uppercase[3:]]
+    for c in cands:
+        if (c / SHARED_REL).exists() or (c / "Projects" / "CarVendors").exists():
+            return c
+    return None
 
 
-def detect():
-    d = load()
-    for key, name in KEYS.items():
-        if d.get(key) and Path(d[key]).exists():
-            continue
-        hits = find(name)
-        if key == "fonts":
-            hits = [h for h in hits if Path(h).parent.name == "All Resources"] or hits
-        if len(hits) == 1:
-            d[key] = hits[0]
-        elif hits:
-            print(f"{key}: several matches, choose one with `paths.py set {key} <path>`:")
-            for h in hits:
-                print("   ", h)
-    d.setdefault("projects_root", str(Path.home() / "Projects" / "videos"))
-    save(d)
-    show()
+def shared_config():
+    md = my_drive()
+    if md and (md / SHARED_REL).exists():
+        try:
+            return md, json.loads((md / SHARED_REL).read_text(encoding="utf-8"))
+        except Exception:
+            pass
+    return md, {"paths": DEFAULT_REL}
 
 
-def show():
-    d = load()
-    for key in list(KEYS) + ["projects_root"]:
-        v = d.get(key)
-        state = "OK     " if v and Path(v).exists() else "MISSING"
-        print(f"{state} {key:<17} {v or '(not set: paths.py set ' + key + ' <path>)'}")
-    print(f"saved in {CFG}")
+def resolve_all():
+    md, cfg = shared_config()
+    out = {}
+    for k, rel in {**DEFAULT_REL, **cfg.get("paths", {})}.items():
+        out[k] = str(md / rel) if md else None
+    out["projects_root"] = str(Path.home() / "Projects" / "videos")
+    for k, v in load_local().items():
+        if k != "my_drive":
+            out[k] = v
+    return md, cfg, out
+
+
+def get(key):
+    _, _, p = resolve_all()
+    v = p.get(key)
+    return Path(v) if v else None
 
 
 def main():
     a = sys.argv[1:]
     if not a or a[0] == "show":
-        return show()
-    if a[0] == "detect":
-        return detect()
+        md, cfg, p = resolve_all()
+        print(f"My Drive: {md or 'NOT FOUND — run: paths.py drive <path to My Drive>'}")
+        for k, v in p.items():
+            ok = v and Path(v).exists()
+            print(f"{'OK     ' if ok else 'MISSING'} {k:<14} {v}")
+        return
+    if a[0] == "get" and len(a) == 2:
+        v = get(a[1])
+        if not v or not v.exists():
+            sys.exit(1)
+        print(v); return
     if a[0] == "set" and len(a) == 3:
         p = Path(os.path.expanduser(a[2]))
         if not p.exists():
             sys.exit(f"does not exist: {p}")
-        d = load(); d[a[1]] = str(p); save(d); return show()
-    if a[0] == "get" and len(a) == 2:
-        v = load().get(a[1])
-        if not v or not Path(v).exists():
-            sys.exit(1)
-        print(v); return
+        d = load_local(); d[a[1]] = str(p); save_local(d); return main_show()
+    if a[0] == "drive" and len(a) == 2:
+        p = Path(os.path.expanduser(a[1]))
+        if not (p / "Projects" / "CarVendors").exists():
+            sys.exit(f"no Projects/CarVendors inside {p}")
+        d = load_local(); d["my_drive"] = str(p); save_local(d); return main_show()
     sys.exit(__doc__)
+
+
+def main_show():
+    sys.argv = [sys.argv[0], "show"]; main()
 
 
 if __name__ == "__main__":
