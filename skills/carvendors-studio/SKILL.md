@@ -89,6 +89,11 @@ Look at the frame sheet: old text gone or covered, no text on the car, logo read
 Report in Bangla: output path(s), hook used, what was covered/removed, any blocker. Give UK-English post copy
 when asked (include the music credit line for NCS tracks).
 
+## 5.1 Storage hygiene (always)
+After a video/batch is approved or the session's video work ends: `$PY $CS/tools/cleanup.py` (dry run) then
+`--apply`. Keeps newest output version + recipe (job.json, index.html, compositions, voice/); deletes drafts,
+older versions, media copies, renders, snapshots. Also empty the session scratchpad. Hand-made projects keep input/.
+
 ## 6. Read more only when needed
 - `references/text-style.md` — THE text look (palette, type, the seven elements, placement). Read before overlays.
 - `references/components.md` — every component's variables (label-card, punch-text, text-cover, logo-badge,
